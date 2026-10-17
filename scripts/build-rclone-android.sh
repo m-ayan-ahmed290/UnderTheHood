@@ -16,4 +16,5 @@ for abi in "${@:-arm64-v8a}"; do
   mkdir -p "$OUT"
   (cd "$SRC"; CGO_ENABLED=0 GOOS=android GOARCH="$ARCH" go build -trimpath -buildvcs=false -ldflags="-s -w -X github.com/rclone/rclone/fs.Version=${VERSION#v}" -o "$OUT/librclone.so" .)
 done
+mkdir -p "$ROOT/docs"
 cp "$SRC/COPYING" "$ROOT/docs/RCLONE-LICENSE.txt"
