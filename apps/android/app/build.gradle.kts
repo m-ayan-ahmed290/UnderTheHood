@@ -4,6 +4,10 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.devtools.ksp")
 }
+val bundledAbis = listOf("arm64-v8a", "x86_64").filter {
+    file("src/main/jniLibs/$it/librclone.so").isFile
+}
+check(bundledAbis.isNotEmpty()) { "Compile the bundled Android engine with scripts/build-rclone-android.sh before building the app" }
 android {
     namespace = "dev.underthehood"
     compileSdk = 35
@@ -14,7 +18,7 @@ android {
         versionCode = 1
         versionName = "0.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        ndk { abiFilters += listOf("arm64-v8a", "x86_64") }
+        ndk { abiFilters += bundledAbis }
     }
     buildFeatures { compose = true; buildConfig = true }
     packaging { jniLibs { useLegacyPackaging = true; keepDebugSymbols += "**/librclone.so" } }
