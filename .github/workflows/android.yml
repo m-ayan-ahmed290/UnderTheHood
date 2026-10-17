@@ -1,0 +1,68 @@
+name: Android APK
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.1'
+          cache: false
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.10.2'
+      - name: Compile bundled Android Rclone
+        run: bash scripts/build-rclone-android.sh arm64-v8a
+      - name: Test and build native APK variants
+        run: gradle :app:testDebugUnitTest :app:lintDebug :app:assembleDebug :app:assembleRelease --no-daemon
+      - name: Package APKs
+        run: |
+          mkdir -p artifacts
+          cp apps/android/app/build/outputs/apk/debug/app-debug.apk artifacts/UnderTheHood-Android-debug.apk
+          cp apps/android/app/build/outputs/apk/release/app-release-unsigned.apk artifacts/UnderTheHood-Android-release-unsigned.apk
+          cd artifacts
+          sha256sum *.apk > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: UnderTheHood-Android
+          path: artifacts/*
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Android-check-reports
+          path: |
+            apps/android/app/build/reports/
+            apps/android/app/schemas/
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: android
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: UnderTheHood-Android
+          path: artifacts
+      - name: Publish downloadable APKs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" artifacts/* --repo "$GITHUB_REPOSITORY" --title "UnderTheHood $GITHUB_REF_NAME" --notes "Android ARM64 development build. Install the debug APK. The unsigned release APK requires signing before installation. Provider sessions have not been live-tested."
