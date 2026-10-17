@@ -53,7 +53,7 @@ Open the private pairing link printed to the terminal. The companion binds only 
 
 Local operation needs no backend. Android includes optional email/password accounts and append-only metadata sync. Deploy [the schema](services/optional-server/supabase/schema.sql) only to a dedicated UnderTheHood project, then configure its URL and publishable key in Settings. Never use a service-role key. Tokens remain device-local; metadata sync is **not end-to-end encrypted**. Devices connect their provider accounts separately using the same remote IDs.
 
-Deployment to organization `xfckukypywapxwmrvwjg` is pending connector access. Desktop/web Supabase account sync is not yet implemented. Independent offline profiles do not automatically share an identity.
+Project `vqkbjzumonqudkeapgxv` in the UnderTheHood organization is the intended backend. Deployment is pending connector authentication/network access. Desktop/web Supabase account sync is not yet implemented. Independent offline profiles do not automatically share an identity.
 
 ## Verification
 

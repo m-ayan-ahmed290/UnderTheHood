@@ -487,4 +487,39 @@ mod tests {
         assert!(plan(&r, 20, Policy::MostFree, 2).is_err());
         assert!(plan(&r, 101, Policy::MostFree, 1).is_err());
     }
+    #[test]
+    fn replica_planning_rejects_duplicate_remote_ids() {
+        let remote = RemoteCapacity {
+            name: "same".into(),
+            free: Some(100),
+            healthy: true,
+            read_only: false,
+            priority: 0,
+        };
+        assert!(plan(&[remote.clone(), remote], 1, Policy::MostFree, 2).is_err());
+    }
+    #[test]
+    fn committed_manifest_and_existing_output_are_preserved() {
+        let d = tempfile::tempdir().unwrap();
+        let m = chunk(&mut b"original".as_slice(), d.path(), 1024).unwrap();
+        let before = fs::read(d.path().join("manifest.json")).unwrap();
+        assert!(chunk(&mut b"replacement".as_slice(), d.path(), 1024).is_err());
+        assert_eq!(before, fs::read(d.path().join("manifest.json")).unwrap());
+        let destination = d.path().join("existing");
+        fs::write(&destination, b"keep").unwrap();
+        assert!(reconstruct(&m, d.path(), &destination).is_err());
+        assert_eq!(fs::read(destination).unwrap(), b"keep");
+    }
+    #[cfg(unix)]
+    #[test]
+    fn reconstruction_rejects_symlink_objects() {
+        let d = tempfile::tempdir().unwrap();
+        let m = chunk(&mut b"fixture".as_slice(), d.path(), 1024).unwrap();
+        let object = d.path().join(&m.chunks[0].object);
+        fs::remove_file(&object).unwrap();
+        let external = d.path().join("external");
+        fs::write(&external, b"fixture").unwrap();
+        std::os::unix::fs::symlink(external, &object).unwrap();
+        assert!(reconstruct(&m, d.path(), &d.path().join("out")).is_err());
+    }
 }

@@ -17,3 +17,6 @@ __pycache__/
 *.db-*
 *.aar
 apps/desktop/src-tauri/resources/
+.kotlin/
+docs/original-brief.txt
+artifacts/
