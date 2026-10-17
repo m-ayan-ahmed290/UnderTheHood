@@ -2,6 +2,16 @@ name: Core, web and desktop
 on:
   push:
     branches: [main]
+    paths:
+      - '.github/workflows/platforms.yml'
+      - 'apps/web/**'
+      - 'apps/desktop/**'
+      - 'packages/**'
+      - 'services/companion/**'
+      - 'scripts/prepare-desktop.py'
+      - 'scripts/integration-test.py'
+      - 'Cargo.*'
+      - 'package*.json'
     tags: ['v*']
   pull_request:
   workflow_dispatch:
