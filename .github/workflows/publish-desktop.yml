@@ -1,5 +1,8 @@
 name: Publish desktop and web previews
 on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/publish-desktop.yml']
   workflow_run:
     workflows: ['Core, web and desktop']
     types: [completed]
@@ -8,13 +11,33 @@ permissions:
   actions: read
 jobs:
   publish:
-    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && (github.event.workflow_run.head_branch == 'main' || startsWith(github.event.workflow_run.head_branch, 'v'))
+    if: github.event_name == 'push' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && (github.event.workflow_run.head_branch == 'main' || startsWith(github.event.workflow_run.head_branch, 'v')))
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
     steps:
+      - name: Select verified build
+        id: source
+        env:
+          EVENT_RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          run_id="$EVENT_RUN_ID"
+          if [[ -z "$run_id" ]]; then
+            run_id=$(gh run list --workflow platforms.yml --status success --branch main --limit 1 --json databaseId --jq '.[0].databaseId')
+          fi
+          test -n "$run_id"
+          test "$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run_id" --jq .conclusion)" = success
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+          echo "sha=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run_id" --jq .head_sha)" >> "$GITHUB_OUTPUT"
+          echo "branch=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run_id" --jq .head_branch)" >> "$GITHUB_OUTPUT"
       - uses: actions/download-artifact@v4
         with:
           github-token: ${{ github.token }}
-          run-id: ${{ github.event.workflow_run.id }}
+          run-id: ${{ steps.source.outputs.run_id }}
           pattern: UnderTheHood-*
           path: packages
       - name: Package downloadable platform builds
@@ -31,8 +54,8 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
-          BUILD_BRANCH: ${{ github.event.workflow_run.head_branch }}
-          BUILD_SHA: ${{ github.event.workflow_run.head_sha }}
+          BUILD_BRANCH: ${{ steps.source.outputs.branch }}
+          BUILD_SHA: ${{ steps.source.outputs.sha }}
         run: |
           if [[ "$BUILD_BRANCH" == main ]]; then
             tag=desktop-preview
@@ -42,6 +65,6 @@ jobs:
             exit 1
           fi
           if ! gh release view "$tag" >/dev/null 2>&1; then
-            gh release create "$tag" --target "$BUILD_SHA" --prerelease --title "UnderTheHood $tag" --notes "Desktop and PWA development previews. Desktop bundles include native Rclone. Windows/macOS packages are unsigned or unnotarized. Web requires the local companion; Supabase deployment remains optional." || gh release view "$tag"
+            gh release create "$tag" --target main --prerelease --title "UnderTheHood $tag" --notes "Desktop and PWA development previews. Desktop bundles include native Rclone. Windows/macOS packages are unsigned or unnotarized. Web requires the local companion; Supabase deployment remains optional. Artifact source commit: $BUILD_SHA." || gh release view "$tag"
           fi
           gh release upload "$tag" assets/* --clobber
