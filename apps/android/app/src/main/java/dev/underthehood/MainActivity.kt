@@ -188,6 +188,15 @@ class MainActivity : ComponentActivity() {
 }
 @Composable fun Settings(m:HoodModel,onExport:()->Unit) {
     var showSync by remember {mutableStateOf(false)}
+    val remotes by m.remotes.collectAsState()
+    var backupRemote by remember {mutableStateOf("")}
+    val context=androidx.compose.ui.platform.LocalContext.current
+    val treePicker=rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+        if(uri!=null && backupRemote.isNotBlank()) {
+            context.contentResolver.takePersistableUriPermission(uri,Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            m.task { val rule=BackupRule(tree=uri.toString(),remote=backupRemote);m.app.db.dao().backup(rule);BackupWorker.schedule(context,rule);m.message.value="One-way backup scheduled every 12 hours on unmetered networks. Source deletions are retained in the cloud." }
+        }
+    }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {
         Text("Your setup",style=MaterialTheme.typography.headlineMedium,fontWeight=FontWeight.Bold)
         Text("LOCAL FIRST",color=MaterialTheme.colorScheme.primary,style=MaterialTheme.typography.labelLarge)
@@ -195,6 +204,10 @@ class MainActivity : ComponentActivity() {
         OutlinedButton(onExport,Modifier.fillMaxWidth()){Text("Export metadata backup")}
         OutlinedButton({showSync=true},Modifier.fillMaxWidth()){Text("Account & cross-device sync")}
         OutlinedButton({m.app.engine.close();m.unlocked.value=false},Modifier.fillMaxWidth()){Text("Lock local profile")}
+        Text("Folder backups",style=MaterialTheme.typography.titleLarge)
+        Text("Select a destination account, then grant access to a device folder. Android controls when scheduled work runs.")
+        remotes.forEach { name -> FilterChip(backupRemote==name,{backupRemote=name},label={Text(name)}) }
+        OutlinedButton({treePicker.launch(null)},enabled=backupRemote.isNotBlank(),modifier=Modifier.fillMaxWidth()){Text("Choose folder for one-way backup")}
         Text("Security & recovery",style=MaterialTheme.typography.titleLarge)
         Text("The passphrase verifier uses Argon2id. Session secrets use Android Keystore AES-GCM. Rclone configuration is encrypted after account setup. Local metadata uses app-private SQLite and is excluded from Android backup.")
         Text("Keep metadata exports safely: they contain filenames and physical locations. This development release does not yet provide an encrypted recovery bundle or biometric unlock.",style=MaterialTheme.typography.bodySmall)

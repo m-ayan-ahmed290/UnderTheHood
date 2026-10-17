@@ -58,27 +58,32 @@ class Rclone(private val context: Context, private val vault: Vault) {
     suspend fun providers(): List<JSONObject> = call("config/providers").getJSONArray("providers").let { a -> List(a.length()) { a.getJSONObject(it) } }
     suspend fun list(remote: String, path: String = ""): List<JSONObject> = call("operations/list", JSONObject().put("fs", "$remote:").put("remote", path)
         .put("opt", JSONObject().put("recurse", false).put("showHash", true))).getJSONArray("list").let { a -> List(a.length()) { a.getJSONObject(it) } }
+    private fun encryptConfiguration() {
+        if (!config.exists()) config.writeText("")
+        val encrypt = process(listOf("config", "encryption", "set"))
+        encrypt.outputStream.bufferedWriter().use { it.write("$password\n$password\n") }
+        encrypt.inputStream.copyTo(object : java.io.OutputStream() { override fun write(b: Int) {} override fun write(b: ByteArray, off: Int, len: Int) {} })
+        check(encrypt.waitFor() == 0) { "Could not encrypt provider configuration" }
+    }
     suspend fun configure(name: String, provider: String, options: Map<String, String>, onStatus: (String) -> Unit) = withContext(Dispatchers.IO) {
         require(name.matches(Regex("[A-Za-z0-9_-]{1,64}"))) { "Use letters, digits, underscores or dashes for account ID" }
+        require(provider != "mega") { "MEGA requires a provider password and is not supported by this password-free wizard" }
+        require(options.keys.all { it.matches(Regex("[A-Za-z0-9_]+")) }) { "Invalid provider option" }
         check(name !in remotes()) { "This account ID already exists" }
         // Stop RC before editing its configuration; reload after the wizard completes.
         synchronized(lock) { server?.destroy(); server = null }
+        encryptConfiguration()
         val args = mutableListOf("config", "create", name, provider, "--auth-no-open-browser")
         options.filterValues { it.isNotBlank() }.forEach { (key, value) -> args.add(key); args.add(value) }
         val child = process(args)
         try {
             child.inputStream.bufferedReader().useLines { lines -> lines.forEach { line ->
-                Regex("https?://(?:127\\.0\\.0\\.1|localhost):[0-9]+/[^\\s]+").find(line)?.value?.let { url ->
+                Regex("""https?://(?:127\.0\.0\.1|localhost):[0-9]+/[^\s]+""").find(line)?.value?.let { url ->
                     context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url.trimEnd('.', '"', '\''))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
                     onStatus("Complete authorization in your browser, then return here.")
                 }
             } }
             check(child.waitFor() == 0) { "Provider setup failed. Shared OAuth credentials may be unavailable; try custom credentials or another provider." }
-            // Encrypt the native configuration using Rclone's supported encrypted format.
-            val encrypt = process(listOf("config", "encryption", "set"))
-            encrypt.outputStream.bufferedWriter().use { it.write("$password\n$password\n") }
-            encrypt.inputStream.copyTo(java.io.OutputStream.nullOutputStream())
-            check(encrypt.waitFor() == 0) { "Could not encrypt provider configuration" }
             onStatus("Account connected")
         } finally { if (child.isAlive) child.destroy() }
     }

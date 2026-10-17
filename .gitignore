@@ -16,3 +16,4 @@ __pycache__/
 *.db
 *.db-*
 *.aar
+apps/desktop/src-tauri/resources/

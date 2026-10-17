@@ -1,0 +1,4 @@
+[workspace]
+members = ["packages/core", "services/companion", "apps/desktop/src-tauri"]
+default-members = ["packages/core", "services/companion"]
+resolver = "2"

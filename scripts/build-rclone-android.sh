@@ -14,7 +14,15 @@ for abi in "${@:-arm64-v8a}"; do
   case "$abi" in arm64-v8a) ARCH=arm64;; x86_64) ARCH=amd64;; *) exit 2;; esac
   OUT="$ROOT/apps/android/app/src/main/jniLibs/$abi"
   mkdir -p "$OUT"
-  (cd "$SRC"; CGO_ENABLED=0 GOOS=android GOARCH="$ARCH" go build -trimpath -buildvcs=false -ldflags="-s -w -X github.com/rclone/rclone/fs.Version=${VERSION#v}" -o "$OUT/librclone.so" .)
+  CGO=0
+  if [ "$abi" = x86_64 ]; then
+    CGO=1
+    COMPILER=$(find "${ANDROID_HOME:?Android SDK required}/ndk" -path '*/bin/x86_64-linux-android29-clang' | sort | tail -1)
+    test -n "$COMPILER" || { echo 'Android NDK compiler not found'; exit 1; }
+    export CC="$COMPILER"
+    export CGO_LDFLAGS='-Wl,-z,max-page-size=16384'
+  fi
+  (cd "$SRC"; CGO_ENABLED="$CGO" GOOS=android GOARCH="$ARCH" go build -trimpath -buildvcs=false -ldflags="-s -w -X github.com/rclone/rclone/fs.Version=${VERSION#v}" -o "$OUT/librclone.so" .)
 done
 mkdir -p "$ROOT/docs"
 cp "$SRC/COPYING" "$ROOT/docs/RCLONE-LICENSE.txt"
