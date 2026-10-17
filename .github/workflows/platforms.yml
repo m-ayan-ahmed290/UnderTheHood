@@ -10,6 +10,7 @@ on:
       - 'services/companion/**'
       - 'scripts/prepare-desktop.py'
       - 'scripts/integration-test.py'
+      - 'scripts/connection-browser-test.cjs'
       - 'Cargo.*'
       - 'package*.json'
     tags: ['v*']
@@ -39,6 +40,8 @@ jobs:
       - run: cargo test --locked --workspace --exclude underthehood-desktop
       - run: cargo fmt --all -- --check
       - run: python3 scripts/integration-test.py
+      - run: npx playwright install --with-deps chromium
+      - run: node scripts/connection-browser-test.cjs
       - uses: actions/upload-artifact@v4
         with:
           name: UnderTheHood-Web

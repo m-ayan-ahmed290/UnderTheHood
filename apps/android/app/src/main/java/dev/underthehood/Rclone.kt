@@ -20,13 +20,13 @@ class Rclone(private val context: Context, private val vault: Vault) {
     private val lock = Any()
     private var port = 0
     private val http = OkHttpClient.Builder().connectTimeout(10, TimeUnit.SECONDS).readTimeout(120, TimeUnit.SECONDS).build()
-    fun process(arguments: List<String>): Process {
+    fun process(arguments: List<String>, combineOutput:Boolean = true): Process {
         check(binary.isFile) { "Bundled Rclone is missing for this device ABI" }
         val builder = ProcessBuilder(listOf(binary.absolutePath) + arguments + listOf("--config", config.absolutePath))
         builder.environment()["RCLONE_CONFIG_PASS"] = password
         builder.environment()["HOME"] = context.noBackupFilesDir.absolutePath
         builder.environment()["TMPDIR"] = context.cacheDir.absolutePath
-        return builder.redirectErrorStream(true).start()
+        return builder.redirectErrorStream(combineOutput).start()
     }
     private fun ensureServer() = synchronized(lock) {
         if (server?.isAlive == true) return@synchronized
@@ -65,33 +65,73 @@ class Rclone(private val context: Context, private val vault: Vault) {
         encrypt.inputStream.copyTo(object : java.io.OutputStream() { override fun write(b: Int) {} override fun write(b: ByteArray, off: Int, len: Int) {} })
         check(encrypt.waitFor() == 0) { "Could not encrypt provider configuration" }
     }
-    suspend fun configure(name: String, provider: String, options: Map<String, String>, onStatus: (String) -> Unit) = withContext(Dispatchers.IO) {
-        require(name.matches(Regex("[A-Za-z0-9_-]{1,64}"))) { "Use letters, digits, underscores or dashes for account ID" }
-        require(provider != "mega") { "MEGA requires a provider password and is not supported by this password-free wizard" }
-        require(options.keys.all { it.matches(Regex("[A-Za-z0-9_]+")) }) { "Invalid provider option" }
-        check(name !in remotes()) { "This account ID already exists" }
-        // Stop RC before editing its configuration; reload after the wizard completes.
-        synchronized(lock) { server?.destroy(); server = null }
-        encryptConfiguration()
-        val args = mutableListOf("config", "create", name, provider, "config_is_local", "true", "config_auth_no_browser", "true")
-        options.filterValues { it.isNotBlank() }.forEach { (key, value) -> args.add(key); args.add(value) }
-        val child = process(args)
-        val reader = Thread {
-            runCatching {
-                child.inputStream.bufferedReader().useLines { lines -> lines.forEach { line ->
-                    Regex("""https?://(?:127\.0\.0\.1|localhost):[0-9]+/[^\s]+""").find(line)?.value?.let { url ->
-                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url.trimEnd('.', '"', '\''))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-                        onStatus("Complete authorization in your browser, then return here.")
-                    }
-                } }
-            }
-        }.apply { isDaemon = true; start() }
+    private suspend fun setupCommand(arguments:List<String>,onAuthUrl:(String)->Unit):JSONObject = withContext(Dispatchers.IO) {
+        val child=process(arguments,false)
+        var output=""
+        val failure=java.util.concurrent.atomic.AtomicReference<Throwable?>(null)
+        val reader=Thread {
+            try {
+                child.inputStream.use { input ->
+                    val bytes=java.io.ByteArrayOutputStream();val buffer=ByteArray(8192)
+                    while(true){val count=input.read(buffer);if(count<0)break;check(bytes.size()+count<=2*1024*1024){"Provider response is too large"};bytes.write(buffer,0,count)}
+                    output=bytes.toString("UTF-8")
+                }
+            }catch(e:Exception){failure.set(e)}
+        }.apply{isDaemon=true;start()}
+        val errors=Thread {
+            runCatching { child.errorStream.bufferedReader().useLines {lines->lines.forEach {line->AuthorizationLinks.find(line)?.let(onAuthUrl)}} }.onFailure{failure.set(it)}
+        }.apply{isDaemon=true;start()}
         try {
-            withTimeout(5 * 60 * 1000L) { while(child.isAlive) delay(200) }
-            reader.join(2000)
-            check(child.exitValue() == 0) { "Provider setup failed. Shared OAuth credentials may be unavailable; try custom credentials or another provider." }
-            onStatus("Account connected")
-        } finally { if (child.isAlive) child.destroy(); child.inputStream.close() }
+            withTimeout(5*60*1000L){while(child.isAlive)delay(100)}
+            reader.join(2000);errors.join(2000)
+            check(child.exitValue()==0){"Provider authorization failed. Check provider options, custom OAuth credentials, or whether shared credentials are still accepted."}
+            check(failure.get()==null){"Could not read provider authorization response"}
+            JSONObject(output)
+        }finally{
+            if(child.isAlive){child.destroy();if(!child.waitFor(2,TimeUnit.SECONDS))child.destroyForcibly()}
+            child.inputStream.close();child.errorStream.close()
+        }
+    }
+    suspend fun configure(rawName:String,provider:String,options:Map<String,String>,
+        onQuestion:suspend(JSONObject)->String={error("Provider needs another setup choice")},
+        onAuthUrl:(String)->Unit={},onStatus:(String)->Unit) = withContext(Dispatchers.IO) {
+        val name=AccountNames.normalize(rawName)
+        require(provider!="mega"){"MEGA requires a password-based setup unavailable in this wizard"}
+        require(options.keys.all{it.matches(Regex("[A-Za-z0-9_]+"))}){"Invalid provider option"}
+        var resume=false
+        if(name in remotes()) {
+            val entry=call("config/get",JSONObject().put("name",name))
+            resume=entry.optString("type")==provider && entry.optString("token").isBlank() && provider in setOf("drive","onedrive","dropbox","box","pcloud","yandex")
+            check(resume){"An account with this name already exists. Choose another name."}
+        }
+        synchronized(lock){server?.destroy();server=null}
+        encryptConfiguration()
+        val defaults=options.filterValues{it.isNotBlank()}.toMutableMap()
+        defaults["config_is_local"]="true";defaults["config_auth_no_browser"]="true"
+        if(defaults["client_id"].isNullOrBlank())defaults["config_shared_client_id"]="true"
+        val parameters=defaults.flatMap{(key,value)->listOf(key,value)}
+        var args=mutableListOf("config",if(resume)"update" else "create",name)
+        if(!resume)args.add(provider)
+        args.addAll(parameters);args.add("--non-interactive")
+        repeat(40) {
+            onStatus("Starting provider authorization…")
+            val response=setupCommand(args,onAuthUrl)
+            val state=response.getString("State")
+            if(state.isEmpty()) {
+                close()
+                onStatus("Checking account authorization…")
+                call("operations/fsinfo",JSONObject().put("fs","$name:"))
+                onStatus("Account connected and checked")
+                return@withContext
+            }
+            val question=response.getJSONObject("Option")
+            require(!question.optBoolean("IsPassword")){"This provider requires a password-based configuration that this wizard does not support"}
+            question.put("Error",response.optString("Error"))
+            val answer=onQuestion(question)
+            args=mutableListOf("config","update",name)
+            args.addAll(parameters);args.addAll(listOf("--non-interactive","--continue","--state",state,"--result",answer))
+        }
+        error("Provider setup exceeded its step limit")
     }
     suspend fun copy(sourceFs: String, source: String, destinationFs: String, destination: String): Int = call("operations/copyfile",
         JSONObject().put("srcFs", sourceFs).put("srcRemote", source).put("dstFs", destinationFs).put("dstRemote", destination).put("_async", true)).getInt("jobid")

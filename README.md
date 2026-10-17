@@ -11,9 +11,9 @@ A local-first unified cloud library. Native Kotlin/Compose Android app, Rust/Tau
 This link becomes available after the **Android APK** workflow passes. The debug APK uses development signing. ARM64 Android 10+; no root, Termux, developer cloud account, or separate Rclone installation required. The unsigned release variant is a build artifact, not directly installable.
 
 1. Install the debug APK and create a local passphrase (12+ characters).
-2. Open Accounts → Connect. Pick a Rclone backend and a unique account ID.
+2. Open Accounts → Connect. Pick a Rclone backend and an account name such as `M. Ayan Drive` or `A.A OneDrive`.
 3. Leave OAuth client ID/secret empty to use Rclone's defaults where supported, or enter custom credentials.
-4. Complete provider authorization in the official browser flow.
+4. Complete provider authorization in the official browser flow. Progress remains visible; use the browser button if it does not open automatically. Answer any provider choices in the dialog.
 5. Browse existing files in Accounts and import them into My Cloud without copying them. Upload through the file picker; save through Android's destination picker.
 
 Scheduled folder backups use user-granted Storage Access Framework folders and WorkManager. They do not mirror source deletions. Android may defer work, and the current transfer worker has the standard WorkManager execution time limit.
@@ -67,3 +67,5 @@ python scripts/integration-test.py
 Workflows: **Android APK** and **Core, web and desktop**. Successful main-branch Android builds publish the `android-preview` prerelease; version tags publish versioned Android assets. Desktop builds produce platform artifacts. See [architecture and security](docs/ARCHITECTURE.md) and [release notes](docs/RELEASING.md).
 
 MIT licensed application. Rclone and dependencies retain their own licenses.
+
+Account connection fixes: [0.1.1 notes](docs/CONNECTION-FIX-0.1.1.md).

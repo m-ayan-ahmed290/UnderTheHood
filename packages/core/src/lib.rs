@@ -392,12 +392,14 @@ impl Rclone {
 }
 pub fn valid_remote(s: &str) -> Result<()> {
     if s.is_empty()
-        || s.len() > 64
+        || s.chars().count() > 64
+        || s != s.trim()
+        || s.starts_with('-')
         || !s
             .chars()
-            .all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '-')
+            .all(|c| c.is_alphanumeric() || matches!(c, ' ' | '.' | '@' | '+' | '_' | '-'))
     {
-        return Err(Error::Invalid("Invalid remote ID".into()));
+        return Err(Error::Invalid("Account name must be 1–64 letters, numbers, spaces, dots, @, +, underscores or hyphens, and cannot start with a hyphen".into()));
     }
     Ok(())
 }
@@ -521,5 +523,27 @@ mod tests {
         fs::write(&external, b"fixture").unwrap();
         std::os::unix::fs::symlink(external, &object).unwrap();
         assert!(reconstruct(&m, d.path(), &d.path().join("out")).is_err());
+    }
+    #[test]
+    fn account_names_match_reported_examples() {
+        for name in [
+            "A.A OneDrive",
+            "M. Ayan Drive",
+            "mail@example.com",
+            "大学 Drive",
+            "cloud+backup",
+        ] {
+            valid_remote(name).unwrap();
+        }
+        for name in [
+            "",
+            "-flag",
+            "bad:remote",
+            "bad/name",
+            "bad\\name",
+            "bad\nname",
+        ] {
+            assert!(valid_remote(name).is_err());
+        }
     }
 }

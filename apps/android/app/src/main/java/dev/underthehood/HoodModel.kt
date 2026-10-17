@@ -49,8 +49,33 @@ class HoodModel(application: Application) : AndroidViewModel(application) {
     fun browse(name: String, path: String = "") = task {
         remote.value = name; remotePath.value = path; physical.value = app.engine.list(name, path)
     }
-    fun connect(name: String, provider: String, options: Map<String,String>) = task {
-        app.engine.configure(name, provider, options) { message.value = it }; refresh()
+    val connectionState=MutableStateFlow("idle")
+    val connectionStatus=MutableStateFlow("")
+    val connectionError=MutableStateFlow("")
+    val authorizationUrl=MutableStateFlow<String?>(null)
+    val connectionQuestion=MutableStateFlow<JSONObject?>(null)
+    private var connectionJob:kotlinx.coroutines.Job?=null
+    private var connectionAnswer:CompletableDeferred<String>?=null
+    fun resetConnection(){if(connectionJob?.isActive!=true){connectionState.value="idle";connectionStatus.value="";connectionError.value="";authorizationUrl.value=null;connectionQuestion.value=null}}
+    fun answerConnection(answer:String){connectionAnswer?.complete(answer)}
+    fun cancelConnection(){connectionJob?.cancel()}
+    fun connect(name:String,provider:String,options:Map<String,String>) {
+        if(connectionJob?.isActive==true)return
+        connectionState.value="working";connectionStatus.value="Starting provider authorization…";connectionError.value="";authorizationUrl.value=null;connectionQuestion.value=null
+        connectionJob=viewModelScope.launch {
+            busy.value=true
+            try {
+                app.engine.configure(name,provider,options,
+                    onQuestion={question->
+                        val answer=CompletableDeferred<String>();connectionAnswer=answer;connectionQuestion.value=question;connectionStatus.value="Choose the next provider option"
+                        try{withTimeout(5*60*1000L){answer.await()}}finally{connectionQuestion.value=null;connectionAnswer=null}
+                    },onAuthUrl={url->authorizationUrl.value=url;connectionStatus.value="Complete sign-in in your browser, then return here."},onStatus={connectionStatus.value=it})
+                remotes.value=app.engine.remotes();connectionState.value="connected";message.value="Account connected and checked"
+            }catch(e:TimeoutCancellationException){connectionState.value="failed";connectionError.value="Authorization timed out. Try again."}
+            catch(e:CancellationException){connectionState.value="cancelled";connectionStatus.value="Connection cancelled";throw e}
+            catch(e:Exception){connectionState.value="failed";connectionError.value=if(e is TimeoutCancellationException)"Authorization timed out. Try again." else e.message?.take(240) ?: "Connection failed"}
+            finally{busy.value=false;connectionQuestion.value=null;connectionAnswer?.cancel();connectionAnswer=null}
+        }
     }
     fun disconnect(name: String) = task {
         app.engine.call("config/delete", JSONObject().put("name", name)); refresh()

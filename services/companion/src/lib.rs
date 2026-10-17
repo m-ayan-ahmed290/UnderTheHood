@@ -1,11 +1,10 @@
+mod setup;
 use hood_core::{now, valid_name, valid_remote, Library, Node, Rclone};
 use serde_json::{json, Value};
 use std::{
     fs::{self, File},
     io::Read,
     path::PathBuf,
-    process::{Command, Stdio},
-    sync::{Arc, Mutex},
 };
 use tiny_http::{Header, Method, Request, Response, Server, StatusCode};
 use uuid::Uuid;
@@ -88,7 +87,7 @@ pub fn serve(config: Config) -> std::io::Result<()> {
         fs::set_permissions(&config.data, fs::Permissions::from_mode(0o700))?;
     }
     let server = Server::http(("127.0.0.1", PORT)).map_err(std::io::Error::other)?;
-    let setup = Arc::new(Mutex::new(String::from("idle")));
+    let setup = setup::Setup::new();
     for mut r in server.incoming_requests() {
         let host = header(&r, "Host").unwrap_or("").to_string();
         let origin = header(&r, "Origin").map(String::from);
@@ -306,39 +305,66 @@ pub fn serve(config: Config) -> std::io::Result<()> {
                     valid_remote(&param("remote"))?;
                     adapter.run(&["about", &format!("{}:", param("remote")), "--json"])
                 }
-                ("GET", "/v1/setup") => Ok(json!({"status":setup.lock().unwrap().clone()})),
+                ("GET", "/v1/setup") => Ok(setup.snapshot()),
+                ("POST", "/v1/setup/cancel") => {
+                    setup.cancel();
+                    Ok(json!({"cancelled":true}))
+                }
+                ("POST", "/v1/setup/open") => {
+                    setup.open().map_err(hood_core::Error::Invalid)?;
+                    Ok(json!({"opened":true}))
+                }
+                ("POST", "/v1/setup/answer") => {
+                    let input: Value = serde_json::from_str(&body)?;
+                    setup
+                        .answer(input["answer"].as_str().unwrap_or("").into())
+                        .map_err(hood_core::Error::Invalid)?;
+                    Ok(json!({"accepted":true}))
+                }
                 ("POST", "/v1/connect") => {
                     let input: Value = serde_json::from_str(&body)?;
-                    let name = input["name"].as_str().unwrap_or("");
-                    let provider = input["provider"].as_str().unwrap_or("");
+                    let name = input["name"].as_str().unwrap_or("").trim();
+                    let provider = input["provider"].as_str().unwrap_or("").trim();
                     valid_remote(name)?;
-                    valid_remote(provider)?;
-                    if provider == "mega" {
-                        return Err(hood_core::Error::Invalid("MEGA requires a provider password and is unavailable in this password-free wizard".into()));
-                    }
-                    if adapter.remotes()?["remotes"]
+                    let providers = adapter.run(&["config", "providers"])?;
+                    if !providers
                         .as_array()
-                        .map(|r| r.iter().any(|v| v.as_str() == Some(name)))
+                        .map(|p| p.iter().any(|p| p["Name"].as_str() == Some(provider)))
                         .unwrap_or(false)
                     {
                         return Err(hood_core::Error::Invalid(
-                            "Account ID already exists".into(),
+                            "Choose an available cloud service".into(),
                         ));
                     }
-
-                    if *setup.lock().unwrap() == "authorizing" {
+                    if provider == "mega" {
                         return Err(hood_core::Error::Invalid(
-                            "Authorization already in progress".into(),
+                            "MEGA requires a password-based setup unavailable in this wizard"
+                                .into(),
                         ));
                     }
-                    let mut args = vec![
-                        "config".to_string(),
-                        "create".into(),
-                        name.into(),
-                        provider.into(),
-                    ];
-                    if let Some(options) = input["options"].as_object() {
-                        for (key, value) in options {
+                    if setup.active() {
+                        return Err(hood_core::Error::Invalid(
+                            "Another account connection is in progress".into(),
+                        ));
+                    }
+                    let existing = adapter.run(&["config", "dump"])?;
+                    let entry = &existing[name];
+                    let resume = entry.is_object()
+                        && entry["type"].as_str() == Some(provider)
+                        && entry["token"].as_str().unwrap_or("").is_empty()
+                        && matches!(
+                            provider,
+                            "drive" | "onedrive" | "dropbox" | "box" | "pcloud" | "yandex"
+                        );
+                    if entry.is_object() && !resume {
+                        return Err(hood_core::Error::Invalid(
+                            "An account with this name already exists. Choose a different name."
+                                .into(),
+                        ));
+                    }
+                    let mut options = std::collections::BTreeMap::new();
+                    if let Some(values) = input["options"].as_object() {
+                        for (key, value) in values {
                             if key.is_empty()
                                 || !key.chars().all(|c| c.is_ascii_alphanumeric() || c == '_')
                             {
@@ -346,33 +372,18 @@ pub fn serve(config: Config) -> std::io::Result<()> {
                                     "Invalid provider option".into(),
                                 ));
                             }
-                            if let Some(v) = value.as_str() {
-                                if !v.trim().is_empty() {
-                                    args.push(key.clone());
-                                    args.push(v.into());
-                                }
+                            let value = value.as_str().ok_or_else(|| {
+                                hood_core::Error::Invalid(
+                                    "Provider option values must be strings".into(),
+                                )
+                            })?;
+                            if !value.trim().is_empty() {
+                                options.insert(key.clone(), value.into());
                             }
                         }
                     }
-                    args.push("--config".into());
-                    args.push(adapter.config.to_string_lossy().into());
-                    let status = setup.clone();
-                    *status.lock().unwrap() = "authorizing".into();
-                    std::thread::spawn(move || {
-                        let result = Command::new(adapter.executable)
-                            .args(args)
-                            .stdin(Stdio::null())
-                            .stdout(Stdio::null())
-                            .stderr(Stdio::null())
-                            .status();
-                        *status.lock().unwrap() = if result.map(|s| s.success()).unwrap_or(false) {
-                            "connected"
-                        } else {
-                            "failed: check required provider options or shared OAuth availability"
-                        }
-                        .into();
-                    });
-                    Ok(json!({"status":"authorizing"}))
+                    setup.start(adapter, name.into(), provider.into(), options, resume);
+                    Ok(setup.snapshot())
                 }
                 _ => Err(hood_core::Error::Invalid(
                     "Unsupported API operation".into(),

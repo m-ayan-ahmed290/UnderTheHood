@@ -165,26 +165,45 @@ class MainActivity : ComponentActivity() {
     if(confirmRemove.isNotBlank()) AlertDialog(onDismissRequest={confirmRemove=""},title={Text("Disconnect $confirmRemove?")},text={Text("Cloud data is retained. Library entries from this account will be unavailable until it is reconnected with the same ID.")},confirmButton={TextButton({m.disconnect(confirmRemove);confirmRemove=""}){Text("Disconnect")}},dismissButton={TextButton({confirmRemove=""}){Text("Cancel")}})
 }
 @Composable fun ConnectDialog(m:HoodModel,dismiss:()->Unit) {
-    val providers by m.providers.collectAsState(); var name by remember {mutableStateOf("")}; var provider by remember {mutableStateOf("drive")}
-    var client by remember {mutableStateOf("")};var secret by remember {mutableStateOf("")};var extra by remember {mutableStateOf("{}")};var error by remember {mutableStateOf("")}
-    AlertDialog(onDismissRequest=dismiss,title={Text("Connect a cloud")},text={Column(Modifier.verticalScroll(rememberScrollState())) {
-        Text("Use an official provider login. Empty OAuth fields use Rclone’s built-in credentials where available.",style=MaterialTheme.typography.bodySmall)
-        OutlinedTextField(name,{name=it},label={Text("Unique account ID")},singleLine=true)
-        Text("Provider",Modifier.padding(top=12.dp),fontWeight=FontWeight.Bold)
-        Row(Modifier.horizontalScroll(rememberScrollState())) {listOf("drive","onedrive","dropbox","s3","webdav").forEach{p -> FilterChip(provider==p,{provider=p},label={Text(p)},modifier=Modifier.padding(end=6.dp))}}
-        OutlinedTextField(provider,{provider=it},label={Text("Rclone backend ID")},singleLine=true)
-        Text("${providers.size} backends available. ${providers.find{it.optString("Name")==provider}?.optString("Description") ?: ""}",style=MaterialTheme.typography.bodySmall)
-        OutlinedTextField(client,{client=it},label={Text("OAuth client ID (optional)")},singleLine=true)
-        OutlinedTextField(secret,{secret=it},label={Text("OAuth client secret (optional)")},visualTransformation=PasswordVisualTransformation(),singleLine=true)
-        OutlinedTextField(extra,{extra=it},label={Text("Advanced provider options (JSON)")},minLines=2)
-        Text("Some providers require additional options. MEGA uses Rclone’s account configuration rather than browser OAuth. Shared OAuth access depends on each provider’s current policy.",style=MaterialTheme.typography.bodySmall)
-        if(error.isNotEmpty()) Text(error,color=MaterialTheme.colorScheme.error)
-    }},confirmButton={TextButton({try {
-        val json=JSONObject(extra); val values=json.keys().asSequence().associateWith{json.getString(it)}.toMutableMap()
-        if(client.isNotBlank())values["client_id"]=client.trim();if(secret.isNotBlank())values["client_secret"]=secret
-        require(provider in providers.map{it.optString("Name")}){"Choose an available backend ID"}
-        m.connect(name,provider,values);dismiss()
-    }catch(e:Exception){error=e.message ?: "Invalid options"}},enabled=name.isNotBlank()){Text("Connect")}},dismissButton={TextButton(dismiss){Text("Cancel")}})
+    val providers by m.providers.collectAsState();var name by remember{mutableStateOf("")};var provider by remember{mutableStateOf("drive")}
+    var client by remember{mutableStateOf("")};var secret by remember{mutableStateOf("")};var extra by remember{mutableStateOf("{}")};var validation by remember{mutableStateOf("")}
+    val state by m.connectionState.collectAsState();val status by m.connectionStatus.collectAsState();val failure by m.connectionError.collectAsState();val url by m.authorizationUrl.collectAsState();val question by m.connectionQuestion.collectAsState()
+    val connecting=state=="working";val context=androidx.compose.ui.platform.LocalContext.current
+    var answer by remember(question){mutableStateOf(question?.optString("DefaultStr") ?: "")}
+    fun openBrowser(){url?.let{runCatching{context.startActivity(Intent(Intent.ACTION_VIEW,Uri.parse(it)))}.onFailure{validation="Could not open a browser. Install or enable a browser and try again."}}}
+    LaunchedEffect(Unit){m.resetConnection()}
+    LaunchedEffect(url){if(connecting && url!=null)openBrowser()}
+    AlertDialog(onDismissRequest={if(!connecting)dismiss()},title={Text("Connect a cloud")},text={Column(Modifier.verticalScroll(rememberScrollState())) {
+        Text("Leave OAuth fields empty to use Rclone’s shared credentials. Some providers are retiring shared credentials during 2026; custom credentials remain available.",style=MaterialTheme.typography.bodySmall)
+        OutlinedTextField(name,{name=it},label={Text("Account name")},placeholder={Text("M. Ayan Drive")},singleLine=true,enabled=!connecting)
+        Row(Modifier.horizontalScroll(rememberScrollState())){listOf("drive","onedrive","dropbox","s3","webdav").forEach{p->FilterChip(provider==p,{provider=p},enabled=!connecting,label={Text(p)},modifier=Modifier.padding(end=6.dp))}}
+        OutlinedTextField(provider,{provider=it},label={Text("Rclone backend ID")},singleLine=true,enabled=!connecting)
+        OutlinedTextField(client,{client=it},label={Text("OAuth client ID (optional)")},singleLine=true,enabled=!connecting)
+        OutlinedTextField(secret,{secret=it},label={Text("OAuth client secret (optional)")},visualTransformation=PasswordVisualTransformation(),singleLine=true,enabled=!connecting)
+        OutlinedTextField(extra,{extra=it},label={Text("Advanced provider options (JSON)")},minLines=2,enabled=!connecting)
+        if(connecting)LinearProgressIndicator(Modifier.fillMaxWidth().padding(vertical=12.dp))
+        if(state!="idle")Text(status,Modifier.padding(vertical=8.dp))
+        if(url!=null && connecting)OutlinedButton({openBrowser()}){Text("Open sign-in page in browser")}
+        question?.let{q->
+            Text(q.optString("Help"));val examples=q.optJSONArray("Examples")
+            if(examples!=null)for(i in 0 until examples.length()){val option=examples.getJSONObject(i);Row(verticalAlignment=Alignment.CenterVertically){RadioButton(answer==option.getString("Value"),{answer=option.getString("Value")});Text(option.optString("Help",option.getString("Value")))}}
+            if(!q.optBoolean("Exclusive"))OutlinedTextField(answer,{answer=it},label={Text("Provider answer")})
+            if(q.optString("Error").isNotBlank())Text(q.optString("Error"),color=MaterialTheme.colorScheme.error)
+        }
+        if(validation.isNotBlank())Text(validation,color=MaterialTheme.colorScheme.error)
+        if(failure.isNotBlank())Text(failure,color=MaterialTheme.colorScheme.error)
+    }},confirmButton={TextButton({
+        when {
+            state=="connected"->dismiss()
+            question!=null->m.answerConnection(answer)
+            else->try{
+                val normalized=AccountNames.normalize(name);val selected=provider.trim();require(selected in providers.map{it.optString("Name")}){"Choose an available cloud service"}
+                val json=JSONObject(extra);val values=json.keys().asSequence().associateWith{json.getString(it)}.toMutableMap()
+                if(client.isNotBlank())values["client_id"]=client.trim();if(secret.isNotBlank())values["client_secret"]=secret
+                validation="";name=normalized;m.connect(normalized,selected,values)
+            }catch(e:Exception){validation=e.message ?: "Invalid options"}
+        }
+    },enabled=(!connecting||question!=null)&&name.isNotBlank()&&!(question?.optBoolean("Required")==true&&answer.isBlank())){Text(if(state=="connected")"Done" else if(question!=null)"Continue" else if(connecting)"Connecting…" else "Connect")}},dismissButton={TextButton({m.cancelConnection();dismiss()}){Text(if(connecting)"Cancel connection" else "Close")}})
 }
 @Composable fun Settings(m:HoodModel,onExport:()->Unit) {
     var showSync by remember {mutableStateOf(false)}
@@ -224,7 +243,7 @@ class MainActivity : ComponentActivity() {
         Text("Security & recovery",style=MaterialTheme.typography.titleLarge)
         Text("The passphrase verifier uses Argon2id. Session secrets use Android Keystore AES-GCM. Rclone configuration is encrypted before account setup. Local metadata uses app-private SQLite and is excluded from Android backup.")
         Text("Keep metadata exports safely: they contain filenames and physical locations. This development release does not yet provide an encrypted recovery bundle or biometric unlock.",style=MaterialTheme.typography.bodySmall)
-        Text("UnderTheHood 0.1.0 · Rclone 1.75.2",style=MaterialTheme.typography.labelMedium)
+        Text("UnderTheHood 0.1.1 · Rclone 1.75.2",style=MaterialTheme.typography.labelMedium)
     }
     if(showSync) SyncDialog(m){showSync=false}
 }

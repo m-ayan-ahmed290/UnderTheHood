@@ -10,7 +10,7 @@ subprocess.run(['cargo','build','--locked','-p','hood-companion'],cwd=root,check
 with tempfile.TemporaryDirectory() as temp:
  data=pathlib.Path(temp);cloud=data/'cloud';cloud.mkdir();(cloud/'existing.txt').write_text('existing cloud file')
  subprocess.run([binary,'config','create','fixture','local','--config',str(data/'rclone.conf'),'--non-interactive'],check=True,stdout=subprocess.DEVNULL)
- env={**os.environ,'UTH_DATA':temp,'UTH_RCLONE':binary,'UTH_WEB_ASSETS':str(root/'apps/web/dist')}
+ env={**os.environ,'UTH_DATA':temp,'UTH_RCLONE':binary,'UTH_WEB_ASSETS':str(root/'apps/web/dist'),'UTH_NO_BROWSER':'1'}
  process=subprocess.Popen([str(root/'target/debug/hood-companion')],env=env,stdout=subprocess.PIPE,text=True)
  try:
   line=process.stdout.readline();token=line.split('#',1)[1].split(' ',1)[0]
@@ -43,6 +43,31 @@ with tempfile.TemporaryDirectory() as temp:
   snapshot=request('snapshot');assert snapshot['version']==1 and len(snapshot['nodes'])==2
   request('restore',snapshot,expect=400)
   request('files?remote=bounded&path=..%2Fsecret',expect=400)
+  def wait_setup(predicate):
+   for _ in range(300):
+    state=request('setup')
+    if predicate(state):return state
+    if state['status']=='failed':raise AssertionError(state['message'])
+    time.sleep(.05)
+   raise AssertionError('Provider setup did not advance')
+  request('connect',{'name':'  Local Account.v2  ','provider':'local','options':{}})
+  wait_setup(lambda s:s['status']=='connected')
+  assert 'Local Account.v2' in request('remotes')['remotes']
+  request('connect',{'name':'Local Account.v2','provider':'local','options':{}},expect=400)
+  request('connect',{'name':'invalid:name','provider':'drive','options':{}},expect=400)
+  for provider,name in [('drive','M. Ayan Drive'),('onedrive','A.A OneDrive'),('drive','M. Ayan Drive')]:
+   request('connect',{'name':name,'provider':provider,'options':{}})
+   state=wait_setup(lambda s:bool(s.get('auth_url')) or s['status']=='question')
+   while state['status']=='question':
+    q=state['question'];answer=q.get('DefaultStr','')
+    if not answer and q.get('Examples'):answer=q['Examples'][0]['Value']
+    request('setup/answer',{'answer':answer})
+    state=wait_setup(lambda s:bool(s.get('auth_url')) or s['status']=='question')
+   assert state['status']=='authorizing',state
+   assert state['auth_url'].startswith('http://127.0.0.1:53682/auth?state=')
+   request('setup/cancel',{})
+   wait_setup(lambda s:s['status']=='cancelled')
+  print('PASS: reported account names, local connection completion, Google Drive/OneDrive OAuth initiation, cancellation and retry without false connected status')
   print('PASS: real Rclone listing/upload/download, SHA-256 round trip, VFS constraints, snapshot and browser security boundaries')
  finally:
   process.terminate();process.wait(timeout=10)

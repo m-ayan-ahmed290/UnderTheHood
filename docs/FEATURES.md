@@ -41,7 +41,7 @@ No live Google Drive, OneDrive, Dropbox, MEGA, or other provider session was ava
 - Virtual trash never deletes physical originals. Permanent cloud deletion and safe chunk garbage collection are intentionally not implemented.
 - Metadata SQLite is app-private, not application-encrypted. Exports contain filenames and remote paths.
 - Android's local passphrase gates the UI. Keystore-backed background credentials are usable by the app for scheduled work without passphrase reentry. This is not a passphrase-encrypted database.
-- A failed provider setup may leave an incomplete remote. Disconnect it and reconnect with a new unique ID.
+- A failed provider setup can leave an incomplete remote. The wizard resumes matching unfinished OAuth accounts when retried; existing authorized accounts are not overwritten.
 - Large transfers can restart after interruption; byte-level resume is provider-dependent and not promised. Worker execution is bounded by Android WorkManager limits.
 - Desktop Rclone config currently relies on filesystem/OS user protection, not keychain encryption.
 - Desktop companion handles requests serially; transfers block other requests. Web upload is limited to 1 GiB. Web download uses a browser Blob and may consume substantial memory.
