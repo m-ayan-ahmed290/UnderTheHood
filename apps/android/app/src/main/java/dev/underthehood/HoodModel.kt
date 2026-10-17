@@ -87,6 +87,11 @@ class HoodModel(application: Application) : AndroidViewModel(application) {
     }
     fun download(node: Node, uri: Uri) = task {
         require(node.remote != null && node.path != null)
+        try {
+            app.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+        } catch (_: SecurityException) {
+            message.value="This destination does not grant persistent access. Reselect it if the device restarts before the download finishes."
+        }
         val job = Job(kind="DOWNLOAD", source="${node.remote}:${node.path}", destination=uri.toString(), nodeId=node.id, name=node.name)
         app.db.dao().putJob(job); TransferWorker.enqueue(app, job)
     }
@@ -108,7 +113,7 @@ class HoodModel(application: Application) : AndroidViewModel(application) {
     }
     fun queue(job: Job, state: String) = task {
         app.db.dao().jobState(job.id, state)
-        WorkManager.getInstance(app).cancelUniqueWork("transfer-${job.id}").result.get()
+        withContext(Dispatchers.IO) { WorkManager.getInstance(app).cancelUniqueWork("transfer-${job.id}").result.get() }
         if (state == "QUEUED") TransferWorker.enqueue(app, job.copy(state=state))
     }
     fun exportMetadata(uri: Uri) = task {
