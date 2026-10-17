@@ -4,6 +4,10 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.withTimeout
 import org.json.JSONObject
 import org.junit.Assert.*
 import org.junit.Test
@@ -31,4 +35,17 @@ class EngineTest {
         }
         fail("Native copy timed out")
     }
+    @Test fun reportedNamesStartBothProviderFlowsAndCanBeRetried() = runBlocking {
+        val app=InstrumentationRegistry.getInstrumentation().targetContext.applicationContext as HoodApplication
+        for((provider,name) in listOf("drive" to "M. Ayan Drive","onedrive" to "A.A OneDrive","drive" to "M. Ayan Drive")) {
+            val authorization=CompletableDeferred<String>()
+            val work=launch {app.engine.configure(name,provider,emptyMap(),onAuthUrl={authorization.complete(it)},onStatus={})}
+            try {
+                val url=withTimeout(20000){authorization.await()}
+                assertTrue(url.startsWith("http://127.0.0.1:53682/auth?state="))
+            }finally{work.cancelAndJoin()}
+        }
+        app.engine.close()
+    }
+
 }

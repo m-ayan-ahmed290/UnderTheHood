@@ -27,8 +27,8 @@ class AccountConnectionUiTest {
   Assert.assertEquals("",model.connectionError.value)
   Assert.assertTrue(model.authorizationUrl.value!!.startsWith("http://127.0.0.1:53682/auth?state="))
   ui.onNodeWithText("Connect a cloud").assertExists()
-  ui.onNodeWithText("Open sign-in page in browser").assertExists()
-  ui.onNodeWithText("Cancel connection").assertExists()
+  ui.onNodeWithText("Open sign-in page in browser").assertIsDisplayed()
+  ui.onNodeWithText("Cancel connection").assertIsDisplayed()
   ui.waitForIdle();Intents.intended(hasAction(Intent.ACTION_VIEW))
  }
 }

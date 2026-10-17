@@ -175,12 +175,16 @@ class MainActivity : ComponentActivity() {
     LaunchedEffect(url){if(connecting && url!=null)openBrowser()}
     AlertDialog(onDismissRequest={if(!connecting)dismiss()},title={Text("Connect a cloud")},text={Column(Modifier.verticalScroll(rememberScrollState())) {
         Text("Leave OAuth fields empty to use Rclone’s shared credentials. Some providers are retiring shared credentials during 2026; custom credentials remain available.",style=MaterialTheme.typography.bodySmall)
+        if(validation.isNotBlank())Text(validation,color=MaterialTheme.colorScheme.error)
+        if(failure.isNotBlank())Text(failure,color=MaterialTheme.colorScheme.error)
+        if(!connecting && state!="connected") {
         OutlinedTextField(name,{name=it},label={Text("Account name")},placeholder={Text("M. Ayan Drive")},singleLine=true,enabled=!connecting)
         Row(Modifier.horizontalScroll(rememberScrollState())){listOf("drive","onedrive","dropbox","s3","webdav").forEach{p->FilterChip(provider==p,{provider=p},enabled=!connecting,label={Text(p)},modifier=Modifier.padding(end=6.dp))}}
         OutlinedTextField(provider,{provider=it},label={Text("Rclone backend ID")},singleLine=true,enabled=!connecting)
         OutlinedTextField(client,{client=it},label={Text("OAuth client ID (optional)")},singleLine=true,enabled=!connecting)
         OutlinedTextField(secret,{secret=it},label={Text("OAuth client secret (optional)")},visualTransformation=PasswordVisualTransformation(),singleLine=true,enabled=!connecting)
         OutlinedTextField(extra,{extra=it},label={Text("Advanced provider options (JSON)")},minLines=2,enabled=!connecting)
+        }
         if(connecting)LinearProgressIndicator(Modifier.fillMaxWidth().padding(vertical=12.dp))
         if(state!="idle")Text(status,Modifier.padding(vertical=8.dp))
         if(url!=null && connecting)OutlinedButton({openBrowser()}){Text("Open sign-in page in browser")}
@@ -190,8 +194,6 @@ class MainActivity : ComponentActivity() {
             if(!q.optBoolean("Exclusive"))OutlinedTextField(answer,{answer=it},label={Text("Provider answer")})
             if(q.optString("Error").isNotBlank())Text(q.optString("Error"),color=MaterialTheme.colorScheme.error)
         }
-        if(validation.isNotBlank())Text(validation,color=MaterialTheme.colorScheme.error)
-        if(failure.isNotBlank())Text(failure,color=MaterialTheme.colorScheme.error)
     }},confirmButton={TextButton({
         when {
             state=="connected"->dismiss()
