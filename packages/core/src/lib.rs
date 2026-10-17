@@ -119,7 +119,7 @@ impl Library {
             let ancestor = map
                 .get(parent)
                 .ok_or_else(|| Error::Invalid("Missing parent folder".into()))?;
-            if !ancestor.folder || ancestor.trash {
+            if !ancestor.folder {
                 return Err(Error::Invalid("Invalid parent folder".into()));
             }
             parent = &ancestor.parent;
@@ -212,9 +212,11 @@ pub fn plan(
     if copies == 0 {
         return Err(Error::Invalid("At least one copy is required".into()));
     }
+    let mut seen = std::collections::HashSet::new();
     let mut eligible: Vec<_> = remotes
         .iter()
         .filter(|r| r.healthy && !r.read_only && r.free.map(|f| f >= size).unwrap_or(false))
+        .filter(|r| seen.insert(r.name.clone()))
         .collect();
     match policy {
         Policy::MostFree => eligible.sort_by_key(|r| std::cmp::Reverse(r.free)),
@@ -256,6 +258,9 @@ pub fn chunk(input: &mut impl Read, directory: &Path, chunk_size: usize) -> Resu
         return Err(Error::Invalid("Chunk size must be 1 KiB–64 MiB".into()));
     }
     fs::create_dir_all(directory)?;
+    if directory.join("manifest.json").exists() {
+        return Err(Error::Invalid("A committed manifest already exists".into()));
+    }
     let mut full = Sha256::new();
     let mut chunks = vec![];
     let mut size = 0;
@@ -292,11 +297,12 @@ pub fn chunk(input: &mut impl Read, directory: &Path, chunk_size: usize) -> Resu
         sha256: format!("{:x}", full.finalize()),
         chunks,
     };
-    let temporary = directory.join("manifest.pending");
+    let temporary = directory.join(format!("{}.manifest.pending", Uuid::new_v4()));
     let mut file = File::create(&temporary)?;
     file.write_all(&serde_json::to_vec(&manifest)?)?;
     file.sync_all()?;
-    fs::rename(temporary, directory.join("manifest.json"))?;
+    fs::hard_link(&temporary, directory.join("manifest.json"))?;
+    fs::remove_file(temporary)?;
     Ok(manifest)
 }
 /// Verify into a temporary file and atomically rename; a corrupt file is never exposed as complete.
@@ -315,7 +321,11 @@ pub fn reconstruct(manifest: &Manifest, directory: &Path, destination: &Path) ->
         let mut buffer = [0u8; 256 * 1024];
         for chunk in &manifest.chunks {
             safe_relative(&chunk.object)?;
-            let mut file = File::open(directory.join(&chunk.object))?;
+            let object = directory.join(&chunk.object);
+            if !fs::symlink_metadata(&object)?.file_type().is_file() {
+                return Err(Error::Invalid("Chunk object is not a regular file".into()));
+            }
+            let mut file = File::open(object)?;
             let mut hash = Sha256::new();
             let mut count = 0;
             loop {
@@ -337,7 +347,8 @@ pub fn reconstruct(manifest: &Manifest, directory: &Path, destination: &Path) ->
             return Err(Error::Invalid("File integrity check failed".into()));
         }
         out.sync_all()?;
-        fs::rename(&temporary, destination)?;
+        fs::hard_link(&temporary, destination)?;
+        fs::remove_file(&temporary)?;
         Ok(())
     })();
     if result.is_err() {

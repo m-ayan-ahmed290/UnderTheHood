@@ -6,6 +6,7 @@ import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.core.content.FileProvider
+import androidx.room.withTransaction
 import androidx.work.WorkManager
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -111,11 +112,31 @@ class HoodModel(application: Application) : AndroidViewModel(application) {
         if (state == "QUEUED") TransferWorker.enqueue(app, job.copy(state=state))
     }
     fun exportMetadata(uri: Uri) = task {
-        val array = JSONArray()
-        app.db.dao().allNodes().forEach { n -> array.put(JSONObject().put("id",n.id).put("parent",n.parent).put("name",n.name).put("folder",n.folder)
-            .put("remote",n.remote).put("path",n.path).put("size",n.size).put("mime",n.mime).put("starred",n.starred).put("trash",n.trash).put("modified",n.modified)) }
-        withContext(Dispatchers.IO) { app.contentResolver.openOutputStream(uri,"wt")!!.bufferedWriter().use { it.write(JSONObject().put("version",1).put("nodes",array).toString(2)) } }
+        val snapshot=Snapshots.encode(app.db.dao().allNodes())
+        withContext(Dispatchers.IO) { app.contentResolver.openOutputStream(uri,"wt")!!.bufferedWriter().use { it.write(snapshot.toString(2)) } }
         message.value = "Metadata exported. Provider credentials are excluded."
+    }
+    fun restoreMetadata(uri:Uri) = task {
+        val bytes=withContext(Dispatchers.IO){app.contentResolver.openInputStream(uri)!!.use{input ->
+            val out=java.io.ByteArrayOutputStream();val buffer=ByteArray(8192)
+            while(out.size()<=16*1024*1024){val count=input.read(buffer);if(count<0)break;out.write(buffer,0,count)}
+            out.toByteArray()
+        }}
+        require(bytes.size<=16*1024*1024){"Snapshot exceeds 16 MB"}
+        val recovered=withContext(Dispatchers.Default){Snapshots.decode(JSONObject(String(bytes,Charsets.UTF_8)))}
+        app.db.withTransaction {
+            require(app.db.dao().allNodes().isEmpty()){"Restore requires an empty library to preserve existing data"}
+            recovered.forEach{app.db.dao().insert(it)}
+        }
+        message.value="Restored ${recovered.size} library entries. Reconnect matching remote IDs to access the cloud files."
+    }
+    fun backupMetadata(destination:String) = task {
+        val folder=File(app.noBackupFilesDir,"metadata-snapshots").apply{mkdirs()}
+        val file=File(folder,"${System.currentTimeMillis()}.json")
+        withContext(Dispatchers.IO){file.writeText(Snapshots.encode(app.db.dao().allNodes()).toString())}
+        val job=Job(kind="UPLOAD",source=Uri.fromFile(file).toString(),destination="$destination:.underthehood/metadata/${file.name}",name="Metadata snapshot ${file.name}",nodeId="metadata-snapshot")
+        app.db.dao().putJob(job);TransferWorker.enqueue(app,job)
+        message.value="Metadata backup queued. Snapshot contains filenames and locations; cloud credentials are excluded."
     }
     companion object {
         fun validateName(name: String) { require(name.isNotBlank() && name.length <= 255 && name !in listOf(".","..") && name.none { it == '/' || it == '\\' || it.code < 32 }) { "Choose a valid name without path separators" } }

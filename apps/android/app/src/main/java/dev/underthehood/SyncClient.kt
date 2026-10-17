@@ -51,9 +51,8 @@ class SyncClient(private val app: HoodApplication) {
         val user=vault.get("sync-user")!!;val device=vault.secret("sync-device")
         val all=app.db.dao().allNodes(); val batch=JSONArray()
         all.forEach{n ->
-            val payload=JSONObject().put("id",n.id).put("parent",n.parent).put("name",n.name).put("folder",n.folder).put("remote",n.remote ?: JSONObject.NULL)
-                .put("path",n.path ?: JSONObject.NULL).put("size",n.size).put("mime",n.mime).put("starred",n.starred).put("trash",n.trash).put("modified",n.modified)
-            val event=UUID.nameUUIDFromBytes("${n.id}:${n.modified}:$device".toByteArray()).toString()
+            val payload=Snapshots.json(n)
+            val event=UUID.nameUUIDFromBytes("${n.id}:$device:$n".toByteArray()).toString()
             batch.put(JSONObject().put("owner_id",user).put("event_id",event).put("device_id",device).put("payload",payload))
             if(batch.length()>=100) {request("/rest/v1/library_events",batch.toString()); while(batch.length()>0)batch.remove(0)}
         }
@@ -64,18 +63,16 @@ class SyncClient(private val app: HoodApplication) {
             for(i in 0 until events.length()) {
                 val event=events.getJSONObject(i);val n=event.getJSONObject("payload")
                 if(event.getString("device_id")!=device) {
-                    val incoming=Node(id=n.getString("id"),parent=n.getString("parent"),name=n.getString("name"),folder=n.getBoolean("folder"),
-                        remote=if(n.isNull("remote"))null else n.getString("remote"),path=if(n.isNull("path"))null else n.getString("path"),size=n.getLong("size"),
-                        mime=n.getString("mime"),starred=n.getBoolean("starred"),trash=n.getBoolean("trash"),modified=n.getLong("modified"))
+                    val incoming=Snapshots.node(n)
                     HoodModel.validateName(incoming.name)
                     app.db.withTransaction {
                         val existing=app.db.dao().node(incoming.id)
                         if(existing==null) {
                             val collision=app.db.dao().allNodes().any{it.parent==incoming.parent && it.name==incoming.name}
                             app.db.dao().insert(if(collision)incoming.copy(name=incoming.name.take(180)+" (sync ${incoming.id.take(8)})") else incoming)
-                        } else if(existing!=incoming && existing.modified!=incoming.modified) {
+                        } else if(existing!=incoming) {
                             // Preserve local edits visibly. Never silently overwrite a different revision.
-                            val conflictId=UUID.nameUUIDFromBytes("${incoming.id}:${incoming.modified}".toByteArray()).toString()
+                            val conflictId=UUID.nameUUIDFromBytes(incoming.toString().toByteArray()).toString()
                             if(app.db.dao().node(conflictId)==null)app.db.dao().insert(incoming.copy(id=conflictId,name=incoming.name.take(180)+" (conflict ${conflictId.take(8)})"))
                         }
                     }; received++

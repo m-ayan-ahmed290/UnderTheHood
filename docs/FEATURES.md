@@ -17,8 +17,8 @@ Status describes code, not live-provider certification. See CI and test reports 
 | Preview | Download ≤100 MB then external app | Download/open locally |
 | Persistent pause/cancel/retry | Implemented; resumes by retrying whole file | Pending |
 | Scheduled folder backups | SAF, 12-hour unmetered scheduling | Pending |
-| Metadata export | Implemented | Implemented |
-| Transactional metadata restore | Pending UI | Rust core + companion API; empty library only |
+| Metadata export | Implemented; optional remote snapshot backup | Implemented |
+| Transactional metadata restore | Implemented; empty library only | Rust core + companion API; empty library only |
 | Optional Supabase accounts/sync | Implemented client; deployment blocked | Pending |
 | Chunk checksums/reconstruction | Shared Rust core only, not Android UI | Tested Rust core, not upload pipeline |
 | Smart placement | Shared Rust core only | Most free / priority / round robin; not wired to UI |
@@ -45,5 +45,5 @@ No live Google Drive, OneDrive, Dropbox, MEGA, or other provider session was ava
 - Large transfers can restart after interruption; byte-level resume is provider-dependent and not promised. Worker execution is bounded by Android WorkManager limits.
 - Desktop Rclone config currently relies on filesystem/OS user protection, not keychain encryption.
 - Desktop companion handles requests serially; transfers block other requests. Web upload is limited to 1 GiB. Web download uses a browser Blob and may consume substantial memory.
-- Background Android backup rules cannot yet be edited/deleted from the UI; clear app storage to reset them. Do not rely on this preview as your sole backup.
+- Android backup rules can be removed; editing a rule requires removing and recreating it. Do not rely on this preview as your sole backup.
 - Conflicting sync revisions are retained as named conflict entries. This is conservative preservation, not full version-vector reconciliation or automatic device enrollment.

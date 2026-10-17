@@ -190,11 +190,16 @@ class MainActivity : ComponentActivity() {
     var showSync by remember {mutableStateOf(false)}
     val remotes by m.remotes.collectAsState()
     var backupRemote by remember {mutableStateOf("")}
+    var rules by remember {mutableStateOf<List<BackupRule>>(emptyList())}
+    var wifiOnly by remember {mutableStateOf(true)}
+    var chargingOnly by remember {mutableStateOf(false)}
+    LaunchedEffect(Unit){rules=m.app.db.dao().backups()}
+    val restorePicker=rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()){uri->uri?.let{m.restoreMetadata(it)}}
     val context=androidx.compose.ui.platform.LocalContext.current
     val treePicker=rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
         if(uri!=null && backupRemote.isNotBlank()) {
             context.contentResolver.takePersistableUriPermission(uri,Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            m.task { val rule=BackupRule(tree=uri.toString(),remote=backupRemote);m.app.db.dao().backup(rule);BackupWorker.schedule(context,rule);m.message.value="One-way backup scheduled every 12 hours on unmetered networks. Source deletions are retained in the cloud." }
+            m.task { val rule=BackupRule(tree=uri.toString(),remote=backupRemote,wifi=wifiOnly,charging=chargingOnly);m.app.db.dao().backup(rule);rules=m.app.db.dao().backups();BackupWorker.schedule(context,rule);m.message.value="One-way backup scheduled every 12 hours on unmetered networks. Source deletions are retained in the cloud." }
         }
     }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),verticalArrangement=Arrangement.spacedBy(16.dp)) {
@@ -202,14 +207,22 @@ class MainActivity : ComponentActivity() {
         Text("LOCAL FIRST",color=MaterialTheme.colorScheme.primary,style=MaterialTheme.typography.labelLarge)
         Text("Your library is stored on this device. Cloud files stay in your connected accounts. Optional account sync shares library metadata when a backend is configured.")
         OutlinedButton(onExport,Modifier.fillMaxWidth()){Text("Export metadata backup")}
+        OutlinedButton({restorePicker.launch(arrayOf("application/json"))},Modifier.fillMaxWidth()){Text("Restore metadata into empty library")}
         OutlinedButton({showSync=true},Modifier.fillMaxWidth()){Text("Account & cross-device sync")}
         OutlinedButton({m.app.engine.close();m.unlocked.value=false},Modifier.fillMaxWidth()){Text("Lock local profile")}
         Text("Folder backups",style=MaterialTheme.typography.titleLarge)
         Text("Select a destination account, then grant access to a device folder. Android controls when scheduled work runs.")
         remotes.forEach { name -> FilterChip(backupRemote==name,{backupRemote=name},label={Text(name)}) }
+        Row(verticalAlignment=Alignment.CenterVertically){Checkbox(wifiOnly,{wifiOnly=it});Text("Unmetered network only")}
+        Row(verticalAlignment=Alignment.CenterVertically){Checkbox(chargingOnly,{chargingOnly=it});Text("While charging only")}
+        OutlinedButton({m.backupMetadata(backupRemote)},enabled=backupRemote.isNotBlank(),modifier=Modifier.fillMaxWidth()){Text("Back up metadata to selected account")}
+        rules.forEach{rule->
+            Text("${rule.remote} · ${if(rule.wifi)"unmetered" else "any network"} · ${if(rule.charging)"charging" else "any battery"}",style=MaterialTheme.typography.bodySmall)
+            TextButton({m.task{m.app.db.dao().deleteBackup(rule.id);androidx.work.WorkManager.getInstance(context).cancelUniqueWork("backup-${rule.id}");rules=m.app.db.dao().backups()}}){Text("Remove backup rule")}
+        }
         OutlinedButton({treePicker.launch(null)},enabled=backupRemote.isNotBlank(),modifier=Modifier.fillMaxWidth()){Text("Choose folder for one-way backup")}
         Text("Security & recovery",style=MaterialTheme.typography.titleLarge)
-        Text("The passphrase verifier uses Argon2id. Session secrets use Android Keystore AES-GCM. Rclone configuration is encrypted after account setup. Local metadata uses app-private SQLite and is excluded from Android backup.")
+        Text("The passphrase verifier uses Argon2id. Session secrets use Android Keystore AES-GCM. Rclone configuration is encrypted before account setup. Local metadata uses app-private SQLite and is excluded from Android backup.")
         Text("Keep metadata exports safely: they contain filenames and physical locations. This development release does not yet provide an encrypted recovery bundle or biometric unlock.",style=MaterialTheme.typography.bodySmall)
         Text("UnderTheHood 0.1.0 · Rclone 1.75.2",style=MaterialTheme.typography.labelMedium)
     }

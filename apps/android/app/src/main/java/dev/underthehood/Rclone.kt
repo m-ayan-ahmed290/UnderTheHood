@@ -73,19 +73,25 @@ class Rclone(private val context: Context, private val vault: Vault) {
         // Stop RC before editing its configuration; reload after the wizard completes.
         synchronized(lock) { server?.destroy(); server = null }
         encryptConfiguration()
-        val args = mutableListOf("config", "create", name, provider, "--auth-no-open-browser")
+        val args = mutableListOf("config", "create", name, provider, "config_is_local", "true", "config_auth_no_browser", "true")
         options.filterValues { it.isNotBlank() }.forEach { (key, value) -> args.add(key); args.add(value) }
         val child = process(args)
+        val reader = Thread {
+            runCatching {
+                child.inputStream.bufferedReader().useLines { lines -> lines.forEach { line ->
+                    Regex("""https?://(?:127\.0\.0\.1|localhost):[0-9]+/[^\s]+""").find(line)?.value?.let { url ->
+                        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url.trimEnd('.', '"', '\''))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                        onStatus("Complete authorization in your browser, then return here.")
+                    }
+                } }
+            }
+        }.apply { isDaemon = true; start() }
         try {
-            child.inputStream.bufferedReader().useLines { lines -> lines.forEach { line ->
-                Regex("""https?://(?:127\.0\.0\.1|localhost):[0-9]+/[^\s]+""").find(line)?.value?.let { url ->
-                    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url.trimEnd('.', '"', '\''))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-                    onStatus("Complete authorization in your browser, then return here.")
-                }
-            } }
-            check(child.waitFor() == 0) { "Provider setup failed. Shared OAuth credentials may be unavailable; try custom credentials or another provider." }
+            withTimeout(5 * 60 * 1000L) { while(child.isAlive) delay(200) }
+            reader.join(2000)
+            check(child.exitValue() == 0) { "Provider setup failed. Shared OAuth credentials may be unavailable; try custom credentials or another provider." }
             onStatus("Account connected")
-        } finally { if (child.isAlive) child.destroy() }
+        } finally { if (child.isAlive) child.destroy(); child.inputStream.close() }
     }
     suspend fun copy(sourceFs: String, source: String, destinationFs: String, destination: String): Int = call("operations/copyfile",
         JSONObject().put("srcFs", sourceFs).put("srcRemote", source).put("dstFs", destinationFs).put("dstRemote", destination).put("_async", true)).getInt("jobid")
