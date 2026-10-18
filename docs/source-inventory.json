@@ -1,0 +1,158 @@
+[
+  {
+    "path": ".gitignore",
+    "sha256": "3d000b377072e5b89d3260db2395fd080fb7bf46f7be234b1abdbd94c8adbb50"
+  },
+  {
+    "path": "settings.gradle.kts",
+    "sha256": "40a01bbbb159ca6c9c7ef4fb61f5da72958178145650bb6eb0fed13686c58c9f"
+  },
+  {
+    "path": "build.gradle.kts",
+    "sha256": "9cdbdc7edaac764a7fba708be33f4b8465aa52d587998d4f51a7e1f9c0516c59"
+  },
+  {
+    "path": "gradle.properties",
+    "sha256": "95ee1fcec61a1d312ba4f46e822766b83571f0bc436873f7b9bcf6ef80896d1c"
+  },
+  {
+    "path": "gradlew",
+    "sha256": "734b3879d3501dce471cf0522d3bcbafe76873d9fc5129345b67fb43bd15e933"
+  },
+  {
+    "path": "gradlew.bat",
+    "sha256": "57931b17dd228e5c24dac90e815d0bf82477e831a4618dfab4136f5446b42a9f"
+  },
+  {
+    "path": "gradle/wrapper/gradle-wrapper.jar",
+    "sha256": "81a82aaea5abcc8ff68b3dfcb58b3c3c429378efd98e7433460610fecd7ae45f"
+  },
+  {
+    "path": "gradle/wrapper/gradle-wrapper.properties",
+    "sha256": "1bb6d43ff8af30abb0eaf03fe58f636ed9b37f758a748bf30a9cebd809639c9d"
+  },
+  {
+    "path": "LICENSE",
+    "sha256": "94348e1308aeb7406bb217bfd8ec02fdb8f8ec193263bd504ec1fbfddd45e1b4"
+  },
+  {
+    "path": "README.md",
+    "sha256": "1025f821a442777ce4b289ea10dd61c031180aa5125c9788534cb0a8a4d1a9be"
+  },
+  {
+    "path": ".github/workflows/android.yml",
+    "sha256": "de63e41cd448d97ff6570d8828cd81997de6083b4e9ce00b46407d258411c24f"
+  },
+  {
+    "path": "apps/android/build.gradle.kts",
+    "sha256": "27ebfd95c36092980f9fbb8fc96312e2f5f7e34ed9cf90ce20a400f8870b19d3"
+  },
+  {
+    "path": "apps/android/src/main/AndroidManifest.xml",
+    "sha256": "cbaa1de543bae38a4d8054ed79cda85e8abf1a18b4b4a45863f7debfa53a69f1"
+  },
+  {
+    "path": "apps/android/src/main/res/xml/network_security.xml",
+    "sha256": "80548c0092d037962a7dc151157fa581c81edcccc7fd0077b3be6d9584e98742"
+  },
+  {
+    "path": "apps/android/src/main/res/xml/file_paths.xml",
+    "sha256": "a6eabf2edab07064560a9e323c5a2ca1ebe6a5cd159e3f3838d887a571a51660"
+  },
+  {
+    "path": "apps/android/schemas/app.underthehood.HoodDatabase/1.json",
+    "sha256": "db23f5290bf97384db9344877866a2c311ce1e9cb455b8e7a7883b0ee0b63626"
+  },
+  {
+    "path": "native/rclone/go.mod",
+    "sha256": "a2f4eb1bb96127629cd65513e274d2671f46206c1e288651498bd540e578ea43"
+  },
+  {
+    "path": "native/rclone/go.sum",
+    "sha256": "7b5b8915bc6cdf715918486c97589fa0c7e8499e420c5a3a0c6937d4955da556"
+  },
+  {
+    "path": "native/rclone/main.go",
+    "sha256": "63a0f93c34ac71cddd7bb105b50dee1dc712e620d22e88c1cb5448b8d0295c56"
+  },
+  {
+    "path": "native/rclone/main_test.go",
+    "sha256": "d0787eb1bbb7c3ec2a4cf772c2a15269cec611ac2a541d0c39a397bbaa3cdcf9"
+  },
+  {
+    "path": "native/rclone/bridge_android.c",
+    "sha256": "f4df268d278318cdeb048ef55abb583e2818283c148ae376db61676a6aa0d374"
+  },
+  {
+    "path": "scripts/build-native.sh",
+    "sha256": "5a6c5a93d9f6f5f7979cdb87de351598103280d59a0ecb4ee8cb06d755ab0438"
+  },
+  {
+    "path": "scripts/device-test.sh",
+    "sha256": "73f9808108630b1c9d4c27ec37bbcbdcc530e983f0dfc3cef393a76400c77e82"
+  },
+  {
+    "path": "scripts/notices.py",
+    "sha256": "570d36395c1227b2177bd64c5c611ce3e9e9c1a4a1baeb49523569dee9d66aa9"
+  },
+  {
+    "path": "docs/status.md",
+    "sha256": "62ebcff4c287ad199c8677fa9b79b80f4bada3c0de4f1ac0d4b82785e30d7287"
+  },
+  {
+    "path": "docs/security.md",
+    "sha256": "c4c993019d53b5f2b24c856fe64a48a5425da57c9805f41352dbf7f0fd502c04"
+  },
+  {
+    "path": "docs/releases.md",
+    "sha256": "5461808976a5853267fbf68144f5a893673fb560be3be7d0bc884a72baa6e19f"
+  },
+  {
+    "path": "docs/architecture.md",
+    "sha256": "3057dc3f2e79353734095dd17fde716989b76c1ad4eb1bbdc1d8af5430f21946"
+  },
+  {
+    "path": "docs/supabase-schema.sql",
+    "sha256": "a90224f043408a2186f3419e412e0cf3b7f23cbc2ed5badc52497eceb99a328d"
+  },
+  {
+    "path": "apps/android/src/main/java/app/underthehood/Engine.kt",
+    "sha256": "55449974253f25e41462fb47d55f9632fe69f0e48dd55d635123fe93704b62f2"
+  },
+  {
+    "path": "apps/android/src/main/java/app/underthehood/Data.kt",
+    "sha256": "373332b588d443be224989a995e9e79ad93c37218dccf389bfecc15be5853d00"
+  },
+  {
+    "path": "apps/android/src/main/java/app/underthehood/Vault.kt",
+    "sha256": "e4322038651b11ba7a72fe8ae2047ffe57d199ead5c417543b1d54f3bb88191d"
+  },
+  {
+    "path": "apps/android/src/main/java/app/underthehood/Transfers.kt",
+    "sha256": "84ee53dd2ed71cb6ffb0b20ea31730bb75ea643d75e51877a165c19d31888f96"
+  },
+  {
+    "path": "apps/android/src/main/java/app/underthehood/Sync.kt",
+    "sha256": "8c4c4d143feaf12df8feab0ce158b110ad45202f0c400ceb3a114528fb953021"
+  },
+  {
+    "path": "apps/android/src/main/java/app/underthehood/Model.kt",
+    "sha256": "8ad3586943cb5216994e34d37f28434c963cc4e9eb533f4655254ff7dc18090e"
+  },
+  {
+    "path": "apps/android/src/main/java/app/underthehood/MainActivity.kt",
+    "sha256": "2c255f36eb1088e6ff3ffa0c432ca75e8a484c354584724f2ab0e12bb2bc3e6e"
+  },
+  {
+    "path": "apps/android/src/test/java/app/underthehood/RulesTest.kt",
+    "sha256": "983a300b1998a11557cb5b9a0472bbae57b48ff0a5e47d5e6a594c3af2da4811"
+  },
+  {
+    "path": "apps/android/src/androidTest/java/app/underthehood/EngineDeviceTest.kt",
+    "sha256": "255c1e5e3cb6e5a80ec02d6958f1fbfc581ce79d5ef5cfe17e480e161e39b28e"
+  },
+  {
+    "path": "apps/android/src/androidTest/java/app/underthehood/LaunchDeviceTest.kt",
+    "sha256": "4af2394ecd432b54f0a12b042aa9987bb7f56197df94a7052cde297305bbe008"
+  }
+]
