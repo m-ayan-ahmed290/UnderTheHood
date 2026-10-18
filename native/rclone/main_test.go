@@ -57,6 +57,15 @@ func TestEngine(t *testing.T) {
 			}
 		}
 	})
+
+	t.Run("reconnect keeps custom OAuth", func(t *testing.T) {
+		rpc(t, "config/update", map[string]any{"name": "custom", "parameters": map[string]string{}, "opt": map[string]bool{"nonInteractive": true, "all": true}})
+		c := rpc(t, "config/get", map[string]string{"name": "custom"})
+		if c["client_id"] != "my-app-id" {
+			t.Fatal("reconnect lost custom application")
+		}
+		rpc(t, "fscache/clear", map[string]any{})
+	})
 	t.Run("browser handoff", func(t *testing.T) {
 		oauthutil.OpenURL("http://127.0.0.1:53682/auth?state=test")
 		if !strings.Contains(rpc(t, "uth/authURL", map[string]any{})["url"].(string), "state=test") {

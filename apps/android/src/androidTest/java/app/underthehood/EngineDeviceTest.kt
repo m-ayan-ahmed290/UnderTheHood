@@ -83,4 +83,42 @@ class EngineDeviceTest {
         assertEquals("Original.txt", store.node(id)?.name)
         assertTrue(store.nodes().any { it.name == "Other device.txt (conflict)" })
     }
+
+    @Test
+    fun snapshotPathsCannotOverwritePrivateFiles() = runBlocking {
+        val c = InstrumentationRegistry.getInstrumentation().targetContext
+        val count = c.hood.db.store().nodes().size
+        val invalid =
+            listOf(
+                Node(id = "../../files/rclone.conf", name = "Unsafe"),
+                Node(id = uuid(), name = "Unsafe", path = "../vault.xml"),
+            )
+        for (node in invalid) {
+            try {
+                SyncClient(c)
+                    .merge(json("version" to 1, "nodes" to JSONArray().put(node.toJson())), uuid())
+                fail("Unsafe snapshot was accepted")
+            } catch (_: IllegalArgumentException) {}
+        }
+        assertEquals(count, c.hood.db.store().nodes().size)
+    }
+
+    @Test
+    fun repeatedArchiveImportsPreserveEachConflictingVersion() = runBlocking {
+        val c = InstrumentationRegistry.getInstrumentation().targetContext
+        val original = Node(name = "Archive original.txt")
+        c.hood.db.store().put(original)
+        val client = SyncClient(c)
+        for (version in 2L..3L) {
+            val incoming = original.copy(name = "Archive version $version.txt", revision = version)
+            client.merge(
+                json("version" to 1, "nodes" to JSONArray().put(incoming.toJson())),
+                "archive",
+            )
+        }
+        val names = c.hood.db.store().nodes().map { it.name }
+        assertTrue("Archive original.txt" in names)
+        assertTrue("Archive version 2.txt (conflict)" in names)
+        assertTrue("Archive version 3.txt (conflict)" in names)
+    }
 }

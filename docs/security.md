@@ -24,3 +24,5 @@ Managed content is **not client-side encrypted by default**. Rclone crypt can be
 Merge does not overwrite an existing different node. It preserves a separate conflict reference, including a trashed incoming version. Because this is snapshot merge rather than a distributed operation log, a merge can require manual organization afterwards.
 
 No physical garbage collection runs automatically. Cancelled uploads can leave private managed objects, deliberately favoring recovery over destructive cleanup. Uninstalling clears local queues, caches, secrets and metadata; export first. The Android application disables OS app backup to avoid pretending a Keystore-encrypted backup would be decryptable on another device.
+
+Protection writes separate object paths on two configured remotes. For account-failure protection, choose independent cloud accounts: two aliases or logins pointing at the same underlying account do not provide independent failure protection. The app cannot infer failure independence from remote names.

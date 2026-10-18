@@ -57,4 +57,36 @@ class RulesTest {
             fail()
         } catch (_: IllegalStateException) {}
     }
+
+    @Test
+    fun stableIdentifiersCannotEscapeCachePaths() {
+        LibraryRules.stableId("00000000-0000-0000-0000-000000000001")
+        LibraryRules.stableId("backup-00000000-0000-0000-0000-000000000001", true)
+        listOf("../rclone.conf", "1-1-1-1-1", "/tmp/a").forEach { value ->
+            try {
+                LibraryRules.stableId(value)
+                fail()
+            } catch (_: IllegalArgumentException) {}
+        }
+    }
+
+    @Test
+    fun remotePathsRejectTraversal() {
+        LibraryRules.relativePath("Documents/文件 café.txt")
+        listOf("../secrets", "/absolute", "folder/../file", "a\\b", "a\u0000b").forEach { path ->
+            try {
+                LibraryRules.relativePath(path)
+                fail()
+            } catch (_: IllegalArgumentException) {}
+        }
+    }
+
+    @Test
+    fun archiveInputIsBoundedBeforeParsing() {
+        assertEquals("café", readLimited(java.io.ByteArrayInputStream("café".toByteArray()), 16))
+        try {
+            readLimited(java.io.ByteArrayInputStream(ByteArray(1025)), 1024)
+            fail()
+        } catch (_: IllegalArgumentException) {}
+    }
 }

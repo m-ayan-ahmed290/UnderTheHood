@@ -2,7 +2,7 @@
 
 Workflow: `.github/workflows/android.yml` — **Android APK · build, test and release**.
 
-Pushes to `main` or `codex/android-first`, pull requests, and manual workflow dispatch compile Android. Version tags beginning with `v` additionally publish a prerelease after the build and emulator-test jobs pass. No desktop or web builds run.
+Pushes to `main` or `codex/android-native-20261018`, pull requests, and manual workflow dispatch compile Android. Version tags beginning with `v` additionally publish a prerelease after the build and emulator-test jobs pass. No desktop or web builds run.
 
 ```bash
 git tag v0.1.0-android.1

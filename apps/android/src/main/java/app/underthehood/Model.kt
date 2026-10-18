@@ -210,13 +210,20 @@ class Model(app: Application) : AndroidViewModel(app) {
     ) = action {
         val r = reconnect ?: Remote(uuid(), LibraryRules.name(name), provider)
         wizardRemote.value = r
-        store.putRemote(r)
+        store.putRemote(r.copy(healthy = false))
+        val method =
+            if (
+                reconnect != null &&
+                    runCatching { Engine.rpc("config/get", json("name" to r.id)) }.isSuccess
+            )
+                "config/update"
+            else "config/create"
         val params = JSONObject()
         if (clientId.isNotBlank()) params.put("client_id", clientId.trim())
         if (clientSecret.isNotBlank()) params.put("client_secret", clientSecret.trim())
         wizard.value =
             configure(
-                "config/create",
+                method,
                 json(
                     "name" to r.id,
                     "type" to provider,
@@ -254,7 +261,10 @@ class Model(app: Application) : AndroidViewModel(app) {
             val r = wizardRemote.value
             wizard.value = null
             wizardRemote.value = null
-            if (r != null) testRemote(r)
+            if (r != null) {
+                Engine.rpc("fscache/clear")
+                testRemote(r)
+            }
         }
     }
 
@@ -296,6 +306,7 @@ class Model(app: Application) : AndroidViewModel(app) {
 
     fun disconnect(r: Remote) = action {
         Engine.rpc("config/delete", json("name" to r.id))
+        Engine.rpc("fscache/clear")
         store.deleteRemote(r.id)
         message.value = "Account disconnected. Files and library references were kept."
     }
@@ -405,6 +416,14 @@ class Model(app: Application) : AndroidViewModel(app) {
     }
 
     fun download(node: Node, uri: Uri?, preview: Boolean = false) = action {
+        if (uri != null)
+            runCatching {
+                context.contentResolver.takePersistableUriPermission(
+                    uri,
+                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
+                )
+            }
+
         Queue.enqueue(
             context,
             Transfer(

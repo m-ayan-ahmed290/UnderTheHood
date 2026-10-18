@@ -224,7 +224,7 @@ class TransferWorker(context: Context, params: WorkerParameters) :
                     if (transfer.chunked && transfer.distributed)
                         LibraryRules.choose(available, length, "round-robin", round = index)
                     else selected
-                val objectPath = "UnderTheHood/objects/${transfer.id}/$index"
+                val objectPath = "UnderTheHood/objects/${transfer.id}"
                 val hash = withContext(Dispatchers.IO) { part.sha256() }
                 val saved = previous.getOrNull(index)
                 if (
@@ -251,17 +251,18 @@ class TransferWorker(context: Context, params: WorkerParameters) :
                         listOf(remote, second)
                     } else listOf(remote)
                 for (target in targets) {
-                    copy(scratch.path, "part", "${target.id}:", objectPath, position)
+                    val replicaPath = "$objectPath/${target.id}/$index"
+                    copy(scratch.path, "part", "${target.id}:", replicaPath, position)
                     // Verify actual stored bytes, even on providers without a common hash
                     // algorithm.
-                    copy("${target.id}:", objectPath, scratch.path, "verify", position)
+                    copy("${target.id}:", replicaPath, scratch.path, "verify", position)
                     check(
                         withContext(Dispatchers.IO) { scratch.resolve("verify").sha256() } == hash
                     ) {
                         "Integrity verification failed; the file was not committed"
                     }
                     scratch.resolve("verify").delete()
-                    copies.put(json("remote" to target.id, "path" to objectPath))
+                    copies.put(json("remote" to target.id, "path" to replicaPath))
                 }
                 chunks.put(
                     json("index" to index, "size" to length, "sha256" to hash, "copies" to copies)

@@ -178,11 +178,58 @@ class SyncClient(private val context: Context) {
         require(ids.size == incoming.size)
         for (n in incoming) {
             LibraryRules.name(n.name)
+            LibraryRules.stableId(n.id, allowBackup = n.folder)
+            if (n.remote.isNotEmpty()) LibraryRules.stableId(n.remote)
+            LibraryRules.relativePath(n.path)
+            if (n.manifest.isNotEmpty()) {
+                val manifest = JSONObject(n.manifest)
+                require(manifest.getInt("version") == 1) { "Unsupported manifest" }
+                val pieces = manifest.getJSONArray("chunks").objects()
+                require(pieces.isNotEmpty()) { "Manifest has no chunks" }
+                var total = 0L
+                pieces.forEachIndexed { index, piece ->
+                    require(piece.getInt("index") == index && piece.getLong("size") >= 0) {
+                        "Invalid chunk order or size"
+                    }
+                    total = Math.addExact(total, piece.getLong("size"))
+                    require(piece.getString("sha256").matches(Regex("[0-9a-f]{64}"))) {
+                        "Invalid checksum"
+                    }
+                    val copies = piece.getJSONArray("copies").objects()
+                    require(
+                        copies.size in 1..2 &&
+                            copies.map { it.getString("remote") }.distinct().size == copies.size
+                    ) {
+                        "Invalid replicas"
+                    }
+                    if (manifest.optBoolean("protected"))
+                        require(copies.size == 2) { "Protection requires two replicas" }
+                    copies.forEach { copy ->
+                        LibraryRules.stableId(copy.getString("remote"))
+                        val path = copy.getString("path")
+                        require(
+                            path.matches(
+                                Regex("UnderTheHood/objects/[0-9a-f-]{36}(/[0-9a-f-]{36})?/[0-9]+")
+                            )
+                        ) {
+                            "Unsafe managed object path"
+                        }
+                        LibraryRules.relativePath(path)
+                    }
+                }
+                require(total == n.size) { "Manifest size does not match the file" }
+            }
+
             require(n.parent.isEmpty() || n.parent in ids) { "Snapshot has missing folders" }
             require(n.size >= 0)
             require(LibraryRules.canMove(n.id, n.parent, incoming)) {
                 "Snapshot has a folder cycle"
             }
+        }
+        payload.optJSONArray("remotes")?.objects()?.forEach {
+            LibraryRules.stableId(it.getString("id"))
+            LibraryRules.name(it.getString("name"))
+            require(it.getString("provider").matches(Regex("[a-z0-9_]+"))) { "Invalid provider" }
         }
         var added = 0
         var conflicts = 0
@@ -193,7 +240,7 @@ class SyncClient(private val context: Context) {
                     store.put(n)
                     added++
                 } else if (local.toJson().toString() != n.toJson().toString()) {
-                    val conflictId = UUIDName(source + n.id)
+                    val conflictId = UUIDName(source + n.id + n.toJson().toString())
                     if (store.node(conflictId) == null) {
                         store.put(
                             n.copy(

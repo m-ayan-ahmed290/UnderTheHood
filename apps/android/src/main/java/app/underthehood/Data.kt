@@ -226,6 +226,26 @@ val Context.hood
     get() = applicationContext as HoodApp
 
 object LibraryRules {
+    fun stableId(value: String, allowBackup: Boolean = false) {
+        val raw = if (allowBackup) value.removePrefix("backup-") else value
+        require(
+            runCatching { java.util.UUID.fromString(raw).toString() == raw }.getOrDefault(false)
+        ) {
+            "Invalid stable identifier"
+        }
+    }
+
+    fun relativePath(value: String) {
+        require(
+            !value.startsWith('/') &&
+                !value.contains('\\') &&
+                !value.contains('\u0000') &&
+                value.split('/').none { it == ".." || it == "." }
+        ) {
+            "Unsafe remote path"
+        }
+    }
+
     fun name(value: String): String {
         val n = value.trim()
         require(

@@ -72,6 +72,10 @@ class TransferDeviceTest {
         manifest.getJSONArray("chunks").objects().forEach { chunk ->
             assertEquals(2, chunk.getJSONArray("copies").length())
             assertEquals(
+                2,
+                chunk.getJSONArray("copies").objects().map { it.getString("path") }.distinct().size,
+            )
+            assertEquals(
                 remotes.first().id,
                 chunk.getJSONArray("copies").getJSONObject(0).getString("remote"),
             )

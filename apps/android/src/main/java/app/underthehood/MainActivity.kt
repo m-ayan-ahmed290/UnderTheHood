@@ -192,10 +192,9 @@ fun HoodScreen(model: Model = viewModel()) {
                     val payload =
                         withContext(Dispatchers.IO) {
                             val raw =
-                                context.contentResolver
-                                    .openInputStream(uri)
-                                    ?.bufferedReader()
-                                    ?.use { it.readText() } ?: error("Cannot read archive")
+                                context.contentResolver.openInputStream(uri)?.use {
+                                    readLimited(it, 30 * 1024 * 1024)
+                                } ?: error("Cannot read archive")
                             require(raw.length <= 30 * 1024 * 1024) { "Archive is too large" }
                             val archive = JSONObject(raw)
                             require(archive.getInt("version") == 1)

@@ -41,7 +41,7 @@
   },
   {
     "path": ".github/workflows/android.yml",
-    "sha256": "ec8e76cb330d96f59b207f8aeeadaf6a0b71ae2a15d45c0b047066965046b812"
+    "sha256": "77124d77d42f0d1303f625da84cb25ae9058ac23f01c09a9ec470b11c25d9e8e"
   },
   {
     "path": "apps/android/build.gradle.kts",
@@ -77,7 +77,7 @@
   },
   {
     "path": "native/rclone/main_test.go",
-    "sha256": "d0787eb1bbb7c3ec2a4cf772c2a15269cec611ac2a541d0c39a397bbaa3cdcf9"
+    "sha256": "b47860d0f085da7480041b814230f5d1f482a9a9fb15949ef071843e30d06874"
   },
   {
     "path": "native/rclone/bridge_android.c",
@@ -101,15 +101,15 @@
   },
   {
     "path": "docs/security.md",
-    "sha256": "c4c993019d53b5f2b24c856fe64a48a5425da57c9805f41352dbf7f0fd502c04"
+    "sha256": "37d27d1addae1edf583f80db3d52b27064c1241b40cfd87ca147df8c27c66e56"
   },
   {
     "path": "docs/releases.md",
-    "sha256": "5461808976a5853267fbf68144f5a893673fb560be3be7d0bc884a72baa6e19f"
+    "sha256": "324e502b296d9e4ea48be06b3d88e91e10988b82214352468778f83e3545a850"
   },
   {
     "path": "docs/architecture.md",
-    "sha256": "3057dc3f2e79353734095dd17fde716989b76c1ad4eb1bbdc1d8af5430f21946"
+    "sha256": "e60b28fb764fdd877a897fabe61f47bdec7a729aa9bd0e58706d340b81b7ade0"
   },
   {
     "path": "docs/supabase-schema.sql",
@@ -117,11 +117,11 @@
   },
   {
     "path": "apps/android/src/main/java/app/underthehood/Engine.kt",
-    "sha256": "55449974253f25e41462fb47d55f9632fe69f0e48dd55d635123fe93704b62f2"
+    "sha256": "c0c1d41dbae67ca7a924f8708c9185ad92fcbf0932e9ff9f2482a8a8ebcc39f9"
   },
   {
     "path": "apps/android/src/main/java/app/underthehood/Data.kt",
-    "sha256": "4d5312e271444d9d5ce9551cd645d37f0509c85d808f48eb4f9070cc6eb529d1"
+    "sha256": "df49c4b8b4b1342fd0956f4b04238dbe965de37da44eac7df2b426f68c61b164"
   },
   {
     "path": "apps/android/src/main/java/app/underthehood/Vault.kt",
@@ -129,27 +129,27 @@
   },
   {
     "path": "apps/android/src/main/java/app/underthehood/Transfers.kt",
-    "sha256": "180090c744fe01d366622b139279caeef469c6884c4abdf555132caeab1da347"
+    "sha256": "4294af94a09ff9ba2bf1e8e97c7b8f0179be3018ee45a3a76bab15d61f05e01d"
   },
   {
     "path": "apps/android/src/main/java/app/underthehood/Sync.kt",
-    "sha256": "8c4c4d143feaf12df8feab0ce158b110ad45202f0c400ceb3a114528fb953021"
+    "sha256": "7c9fabf1f86346f779794c75ce2750daf64b9ccfd3bb6337dfcbcbd5e3cbe199"
   },
   {
     "path": "apps/android/src/main/java/app/underthehood/Model.kt",
-    "sha256": "9a041b59e8f5a9265fe35db27ab5b97388fc32b4c35b37986d2e77ded124ea87"
+    "sha256": "92e40305883f966c2125720afe6ff93c3f387b1e89b8648d8852230171c05226"
   },
   {
     "path": "apps/android/src/main/java/app/underthehood/MainActivity.kt",
-    "sha256": "16c582409e2c998af8c9b3ddc28a658181a80d446157b82a4f1cd1db8ba6a2fb"
+    "sha256": "62ae0952dfd4cbbe7b45a204d9b67289970e1d817c34dd5d23a19436072c5182"
   },
   {
     "path": "apps/android/src/test/java/app/underthehood/RulesTest.kt",
-    "sha256": "983a300b1998a11557cb5b9a0472bbae57b48ff0a5e47d5e6a594c3af2da4811"
+    "sha256": "79302c6e1317afb2831c70c2fe212f9505654d3c2918a89dc033c4c0f47a26d2"
   },
   {
     "path": "apps/android/src/androidTest/java/app/underthehood/EngineDeviceTest.kt",
-    "sha256": "255c1e5e3cb6e5a80ec02d6958f1fbfc581ce79d5ef5cfe17e480e161e39b28e"
+    "sha256": "f4a5da7feb899994acfaf673c81fcce0526785aea6fd04dd9777c8211dc8a40d"
   },
   {
     "path": "apps/android/src/androidTest/java/app/underthehood/LaunchDeviceTest.kt",
@@ -157,7 +157,7 @@
   },
   {
     "path": "apps/android/src/androidTest/java/app/underthehood/TransferDeviceTest.kt",
-    "sha256": "1ca704d702e461a3b1dbf8a5ea3dd35e2e2a473e55089468e59ea291f395985c"
+    "sha256": "aae5294e507cce0a1084b182d06c96a91f67788169782ed0025261b9e485d5da"
   },
   {
     "path": "apps/android/schemas/app.underthehood.HoodDatabase/2.json",

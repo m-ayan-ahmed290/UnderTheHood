@@ -40,3 +40,17 @@ fun json(vararg fields: Pair<String, Any?>) =
     JSONObject().apply { fields.forEach { (k, v) -> put(k, v ?: JSONObject.NULL) } }
 
 fun org.json.JSONArray.objects(): List<JSONObject> = (0 until length()).map { getJSONObject(it) }
+
+fun readLimited(input: java.io.InputStream, limit: Int): String {
+    val output = java.io.ByteArrayOutputStream()
+    val buffer = ByteArray(65536)
+    var total = 0
+    while (true) {
+        val count = input.read(buffer)
+        if (count < 0) break
+        total += count
+        require(total <= limit) { "Archive is too large" }
+        output.write(buffer, 0, count)
+    }
+    return output.toString("UTF-8")
+}
