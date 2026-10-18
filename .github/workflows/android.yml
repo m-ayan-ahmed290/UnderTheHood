@@ -101,7 +101,9 @@ jobs:
         if: always()
         with:
           name: Android-device-test-results
-          path: device-test-results.txt
+          path: |
+            device-test-results.txt
+            device-logcat.txt
   release:
     if: startsWith(github.ref, 'refs/tags/v')
     needs: [build, device-test]

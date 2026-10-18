@@ -29,11 +29,19 @@ class LaunchDeviceTest {
         compose.onNodeWithContentDescription("New folder").performClick()
         compose.onNodeWithText("Value").performTextInput("Device integration folder")
         compose.onNodeWithText("Save").performClick()
-        compose.waitUntil(10000) {
-            compose
-                .onAllNodesWithText("Device integration folder")
-                .fetchSemanticsNodes()
-                .isNotEmpty()
+        try {
+            compose.waitUntil(10000) {
+                compose
+                    .onAllNodesWithText("Device integration folder")
+                    .fetchSemanticsNodes()
+                    .isNotEmpty()
+            }
+        } catch (e: Exception) {
+            val c =
+                androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
+                    .targetContext
+            val names = kotlinx.coroutines.runBlocking { c.hood.db.store().nodes().map { it.name } }
+            throw AssertionError("Stored nodes: $names\nUI: ${compose.onRoot().printToString()}", e)
         }
         compose.onNodeWithText("Device integration folder").assertIsDisplayed()
     }

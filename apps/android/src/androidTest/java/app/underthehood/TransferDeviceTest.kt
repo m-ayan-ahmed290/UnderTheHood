@@ -65,7 +65,12 @@ class TransferDeviceTest {
             TestListenableWorkerBuilder<TransferWorker>(c)
                 .setInputData(workDataOf("job" to upload.id))
                 .build()
-        assertEquals(ListenableWorker.Result.success(), worker.doWork())
+        val uploadResult = worker.doWork()
+        assertEquals(
+            "Upload error: ${store.job(upload.id)?.error}",
+            ListenableWorker.Result.success(),
+            uploadResult,
+        )
         val node = store.node(upload.id)!!
         val manifest = JSONObject(node.manifest)
         assertEquals(2, manifest.getJSONArray("chunks").length())
@@ -91,12 +96,15 @@ class TransferDeviceTest {
                 total = node.size,
             )
         store.putJob(download)
-        assertEquals(
-            ListenableWorker.Result.success(),
+        val downloadResult =
             TestListenableWorkerBuilder<TransferWorker>(c)
                 .setInputData(workDataOf("job" to download.id))
                 .build()
-                .doWork(),
+                .doWork()
+        assertEquals(
+            "Download error: ${store.job(download.id)?.error}",
+            ListenableWorker.Result.success(),
+            downloadResult,
         )
         assertEquals(source.sha256(), destination.sha256())
         val copy =

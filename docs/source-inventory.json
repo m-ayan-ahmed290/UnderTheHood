@@ -41,7 +41,7 @@
   },
   {
     "path": ".github/workflows/android.yml",
-    "sha256": "77124d77d42f0d1303f625da84cb25ae9058ac23f01c09a9ec470b11c25d9e8e"
+    "sha256": "13237d36dd72e22a0a96d36cfcb4c359ffe1b957131674a83508b3a79b46144f"
   },
   {
     "path": "apps/android/build.gradle.kts",
@@ -89,7 +89,7 @@
   },
   {
     "path": "scripts/device-test.sh",
-    "sha256": "73f9808108630b1c9d4c27ec37bbcbdcc530e983f0dfc3cef393a76400c77e82"
+    "sha256": "2cc18a63a531177186cb97692d70a1c507d5ba15ac6b0869a12ec6af05063622"
   },
   {
     "path": "scripts/notices.py",
@@ -153,11 +153,11 @@
   },
   {
     "path": "apps/android/src/androidTest/java/app/underthehood/LaunchDeviceTest.kt",
-    "sha256": "4af2394ecd432b54f0a12b042aa9987bb7f56197df94a7052cde297305bbe008"
+    "sha256": "db034af96cb2470a74bc2e15e0d9f709bcabff2dbdc0e475437d722f93673b28"
   },
   {
     "path": "apps/android/src/androidTest/java/app/underthehood/TransferDeviceTest.kt",
-    "sha256": "aae5294e507cce0a1084b182d06c96a91f67788169782ed0025261b9e485d5da"
+    "sha256": "d7b5dba87c783ad19b54fff6d7b310c9711f3f95ee5b90df00ca6856b6912c6e"
   },
   {
     "path": "apps/android/schemas/app.underthehood.HoodDatabase/2.json",
