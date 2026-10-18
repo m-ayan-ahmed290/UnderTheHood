@@ -102,6 +102,8 @@ fun Field(
 @Composable
 fun HoodScreen(model: Model = viewModel()) {
     val context = androidx.compose.ui.platform.LocalContext.current
+    val mainFocus = androidx.compose.ui.platform.LocalFocusManager.current
+    val mainKeyboard = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
     val unlocked by model.unlocked.collectAsStateWithLifecycle()
     val busy by model.busy.collectAsStateWithLifecycle()
     val message by model.message.collectAsStateWithLifecycle()
@@ -357,6 +359,8 @@ fun HoodScreen(model: Model = viewModel()) {
                         if (!model.context.vault.exists && pass != passConfirm)
                             model.message.value = "Passphrases do not match"
                         else {
+                            mainFocus.clearFocus(force = true)
+                            mainKeyboard?.hide()
                             model.unlock(pass)
                             pass = ""
                             passConfirm = ""
@@ -1024,8 +1028,15 @@ fun HoodScreen(model: Model = viewModel()) {
             },
             text = { Field(text, { text = it }, "Value") },
             confirmButton = {
+                val dialogFocus = androidx.compose.ui.platform.LocalFocusManager.current
+                val dialogKeyboard =
+                    androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
                 TextButton(
                     onClick = {
+                        dialogFocus.clearFocus(force = true)
+                        dialogKeyboard?.hide()
+                        mainFocus.clearFocus(force = true)
+                        mainKeyboard?.hide()
                         when (dialog) {
                             "folder" -> model.createFolder(parent, text)
                             "rename" -> focused?.let { model.edit(it, name = text) }

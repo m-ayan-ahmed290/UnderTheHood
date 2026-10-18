@@ -77,7 +77,7 @@
   },
   {
     "path": "native/rclone/main_test.go",
-    "sha256": "b47860d0f085da7480041b814230f5d1f482a9a9fb15949ef071843e30d06874"
+    "sha256": "ced0ef831a05a4933c7c042315b6b6fa30e24648288ab18bddcbbbca4aa3bb09"
   },
   {
     "path": "native/rclone/bridge_android.c",
@@ -117,7 +117,7 @@
   },
   {
     "path": "apps/android/src/main/java/app/underthehood/Engine.kt",
-    "sha256": "c0c1d41dbae67ca7a924f8708c9185ad92fcbf0932e9ff9f2482a8a8ebcc39f9"
+    "sha256": "5af283c8797afbf0c0797c61eebe4a42e1833ae6dced540da05b51e196a6c119"
   },
   {
     "path": "apps/android/src/main/java/app/underthehood/Data.kt",
@@ -141,7 +141,7 @@
   },
   {
     "path": "apps/android/src/main/java/app/underthehood/MainActivity.kt",
-    "sha256": "62ae0952dfd4cbbe7b45a204d9b67289970e1d817c34dd5d23a19436072c5182"
+    "sha256": "1bcf0c886dbc9eb119852cc73b33f5499777d29bbde8bd90bc45c1174b6f93b2"
   },
   {
     "path": "apps/android/src/test/java/app/underthehood/RulesTest.kt",
@@ -153,7 +153,7 @@
   },
   {
     "path": "apps/android/src/androidTest/java/app/underthehood/LaunchDeviceTest.kt",
-    "sha256": "db034af96cb2470a74bc2e15e0d9f709bcabff2dbdc0e475437d722f93673b28"
+    "sha256": "0c6d111c8c747cf7e5c74168affdf023723f8c75df6301b813bd579677b10068"
   },
   {
     "path": "apps/android/src/androidTest/java/app/underthehood/TransferDeviceTest.kt",

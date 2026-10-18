@@ -21,7 +21,11 @@ object Engine {
                     )
                     .toString(Charsets.UTF_8)
             )
-        if (result.has("error")) throw IllegalStateException(result.optString("error").take(1200))
+        if (
+            result.optInt("status", 200) >= 400 ||
+                (!result.isNull("error") && result.optString("error").isNotEmpty())
+        )
+            throw IllegalStateException(result.optString("error").take(1200))
         return result
     }
 

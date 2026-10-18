@@ -36,7 +36,7 @@ class LaunchDeviceTest {
                     .fetchSemanticsNodes()
                     .isNotEmpty()
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             val c =
                 androidx.test.platform.app.InstrumentationRegistry.getInstrumentation()
                     .targetContext

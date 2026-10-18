@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func rpc(t *testing.T, m string, p any) map[string]any {
@@ -17,7 +18,7 @@ func rpc(t *testing.T, m string, p any) map[string]any {
 	if e := json.Unmarshal([]byte(out), &r); e != nil {
 		t.Fatal(e, out)
 	}
-	if e, ok := r["error"]; ok {
+	if e, ok := r["error"]; ok && e != nil && e != "" {
 		t.Fatalf("%s: %v", m, e)
 	}
 	return r
@@ -95,6 +96,32 @@ func TestEngine(t *testing.T) {
 		rpc(t, "operations/deletefile", map[string]string{"fs": dst, "remote": "renamed.txt"})
 		if _, e = os.Stat(filepath.Join(dst, "renamed.txt")); !os.IsNotExist(e) {
 			t.Fatal("delete failed")
+		}
+	})
+
+	t.Run("asynchronous alias transfer and progress", func(t *testing.T) {
+		dst := filepath.Join(dir, "async")
+		os.MkdirAll(dst, 0700)
+		rpc(t, "config/create", map[string]any{"name": "async-alias", "type": "alias", "parameters": map[string]string{"remote": dst}, "opt": map[string]bool{"nonInteractive": true}})
+		result := rpc(t, "operations/copyfile", map[string]any{"srcFs": filepath.Join(dir, "src"), "srcRemote": "source.txt", "dstFs": "async-alias:", "dstRemote": "UnderTheHood/objects/test/0", "_async": true, "_group": "async-fixture"})
+		deadline := time.Now().Add(3 * time.Second)
+		for {
+			status := rpc(t, "job/status", map[string]any{"jobid": result["jobid"]})
+			rpc(t, "core/stats", map[string]string{"group": "async-fixture"})
+			if status["finished"] == true {
+				if status["success"] != true {
+					t.Fatal(status["error"])
+				}
+				break
+			}
+			if time.Now().After(deadline) {
+				t.Fatal("job timed out")
+			}
+			time.Sleep(20 * time.Millisecond)
+		}
+		rpc(t, "core/stats-reset", map[string]string{"group": "async-fixture"})
+		if _, err := os.Stat(filepath.Join(dst, "UnderTheHood/objects/test/0")); err != nil {
+			t.Fatal(err)
 		}
 	})
 	t.Run("encrypted config", func(t *testing.T) {
