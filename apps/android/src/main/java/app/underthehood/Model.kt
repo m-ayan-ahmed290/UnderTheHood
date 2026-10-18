@@ -179,6 +179,28 @@ class Model(app: Application) : AndroidViewModel(app) {
         )
     }
 
+    private var configurationJob: Long? = null
+
+    private suspend fun configure(method: String, parameters: JSONObject): JSONObject {
+        parameters.put("_async", true)
+        val id = Engine.rpc(method, parameters).getLong("jobid")
+        configurationJob = id
+        try {
+            while (true) {
+                val status = Engine.rpc("job/status", json("jobid" to id))
+                if (status.optBoolean("finished")) {
+                    check(status.optBoolean("success")) {
+                        status.optString("error", "Connection setup failed")
+                    }
+                    return status.optJSONObject("output") ?: JSONObject()
+                }
+                delay(300)
+            }
+        } finally {
+            configurationJob = null
+        }
+    }
+
     fun startRemote(
         provider: String,
         name: String,
@@ -193,7 +215,7 @@ class Model(app: Application) : AndroidViewModel(app) {
         if (clientId.isNotBlank()) params.put("client_id", clientId.trim())
         if (clientSecret.isNotBlank()) params.put("client_secret", clientSecret.trim())
         wizard.value =
-            Engine.rpc(
+            configure(
                 "config/create",
                 json(
                     "name" to r.id,
@@ -209,7 +231,7 @@ class Model(app: Application) : AndroidViewModel(app) {
         val r = wizardRemote.value ?: return@action
         val state = wizard.value?.optString("State") ?: ""
         wizard.value =
-            Engine.rpc(
+            configure(
                 "config/update",
                 json(
                     "name" to r.id,
@@ -237,6 +259,7 @@ class Model(app: Application) : AndroidViewModel(app) {
     }
 
     fun cancelWizard() = action {
+        configurationJob?.let { Engine.rpc("job/stop", json("jobid" to it)) }
         wizard.value = null
         wizardRemote.value = null
         authUrl.value = ""
@@ -373,6 +396,7 @@ class Model(app: Application) : AndroidViewModel(app) {
                     total = size,
                     chunked = chunks,
                     protected = protection,
+                    distributed = chunks && policy != "manual",
                 ),
                 wifi,
                 charging,

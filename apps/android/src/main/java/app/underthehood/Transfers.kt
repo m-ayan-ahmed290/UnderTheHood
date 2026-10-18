@@ -221,7 +221,7 @@ class TransferWorker(context: Context, params: WorkerParameters) :
                     break
                 }
                 val remote =
-                    if (transfer.chunked)
+                    if (transfer.chunked && transfer.distributed)
                         LibraryRules.choose(available, length, "round-robin", round = index)
                     else selected
                 val objectPath = "UnderTheHood/objects/${transfer.id}/$index"
@@ -301,7 +301,7 @@ class TransferWorker(context: Context, params: WorkerParameters) :
         val destination =
             if (transfer.operation == "preview") {
                 val folder = applicationContext.cacheDir.resolve("previews").apply { mkdirs() }
-                folder.resolve(node.id).outputStream()
+                scratch.resolve("preview.out").outputStream()
             } else
                 applicationContext.contentResolver.openOutputStream(Uri.parse(transfer.uri), "wt")
                     ?: error("Destination is not writable")
@@ -346,6 +346,12 @@ class TransferWorker(context: Context, params: WorkerParameters) :
                     done += chunk.getLong("size")
                     scratch.resolve("part").delete()
                 }
+            }
+        }
+        if (transfer.operation == "preview") {
+            val destination = applicationContext.cacheDir.resolve("previews/${node.id}")
+            check(scratch.resolve("preview.out").renameTo(destination)) {
+                "Cannot commit verified preview"
             }
         }
         transfer = transfer.copy(total = node.size)

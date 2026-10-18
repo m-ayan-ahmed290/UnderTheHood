@@ -1240,7 +1240,7 @@ fun HoodScreen(model: Model = viewModel()) {
                 )
             }
         AlertDialog(
-            onDismissRequest = { if (!busy) model.cancelWizard() },
+            onDismissRequest = { model.cancelWizard() },
             title = { Text("Connect ${configuring!!.name}") },
             text = {
                 Column(Modifier.verticalScroll(rememberScrollState())) {
@@ -1290,9 +1290,7 @@ fun HoodScreen(model: Model = viewModel()) {
                 }
             },
             dismissButton = {
-                TextButton(onClick = { model.cancelWizard() }, enabled = !busy) {
-                    Text("Close setup")
-                }
+                TextButton(onClick = { model.cancelWizard() }) { Text("Close setup") }
             },
         )
     }

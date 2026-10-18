@@ -104,6 +104,7 @@ data class Transfer(
     val workId: String = "",
     val chunked: Boolean = false,
     val protected: Boolean = false,
+    @ColumnInfo(defaultValue = "0") val distributed: Boolean = false,
 )
 
 @Entity(tableName = "backups")
@@ -199,7 +200,7 @@ interface Store {
             BackupFile::class,
             Event::class,
         ],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 abstract class HoodDatabase : RoomDatabase() {
@@ -214,6 +215,7 @@ class HoodApp : Application() {
         super.onCreate()
         db =
             Room.databaseBuilder(this, HoodDatabase::class.java, "library.db")
+                .addMigrations(MIGRATION_1_2)
                 .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
                 .build()
         vault = Vault(this)
@@ -275,3 +277,10 @@ object LibraryRules {
         }
     }
 }
+
+val MIGRATION_1_2 =
+    object : androidx.room.migration.Migration(1, 2) {
+        override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE jobs ADD COLUMN distributed INTEGER NOT NULL DEFAULT 0")
+        }
+    }

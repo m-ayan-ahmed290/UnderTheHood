@@ -41,15 +41,15 @@
   },
   {
     "path": ".github/workflows/android.yml",
-    "sha256": "de63e41cd448d97ff6570d8828cd81997de6083b4e9ce00b46407d258411c24f"
+    "sha256": "ec8e76cb330d96f59b207f8aeeadaf6a0b71ae2a15d45c0b047066965046b812"
   },
   {
     "path": "apps/android/build.gradle.kts",
-    "sha256": "27ebfd95c36092980f9fbb8fc96312e2f5f7e34ed9cf90ce20a400f8870b19d3"
+    "sha256": "7524030ac98170bc72fc88e7ddb7af872dfbc9be2bdedec36c5123ca44ab44de"
   },
   {
     "path": "apps/android/src/main/AndroidManifest.xml",
-    "sha256": "cbaa1de543bae38a4d8054ed79cda85e8abf1a18b4b4a45863f7debfa53a69f1"
+    "sha256": "2a3d1791895b21b1a0ce13daf670ef0f4436d9b07167fda023519d844d2061f9"
   },
   {
     "path": "apps/android/src/main/res/xml/network_security.xml",
@@ -121,7 +121,7 @@
   },
   {
     "path": "apps/android/src/main/java/app/underthehood/Data.kt",
-    "sha256": "373332b588d443be224989a995e9e79ad93c37218dccf389bfecc15be5853d00"
+    "sha256": "4d5312e271444d9d5ce9551cd645d37f0509c85d808f48eb4f9070cc6eb529d1"
   },
   {
     "path": "apps/android/src/main/java/app/underthehood/Vault.kt",
@@ -129,7 +129,7 @@
   },
   {
     "path": "apps/android/src/main/java/app/underthehood/Transfers.kt",
-    "sha256": "84ee53dd2ed71cb6ffb0b20ea31730bb75ea643d75e51877a165c19d31888f96"
+    "sha256": "180090c744fe01d366622b139279caeef469c6884c4abdf555132caeab1da347"
   },
   {
     "path": "apps/android/src/main/java/app/underthehood/Sync.kt",
@@ -137,11 +137,11 @@
   },
   {
     "path": "apps/android/src/main/java/app/underthehood/Model.kt",
-    "sha256": "8ad3586943cb5216994e34d37f28434c963cc4e9eb533f4655254ff7dc18090e"
+    "sha256": "9a041b59e8f5a9265fe35db27ab5b97388fc32b4c35b37986d2e77ded124ea87"
   },
   {
     "path": "apps/android/src/main/java/app/underthehood/MainActivity.kt",
-    "sha256": "2c255f36eb1088e6ff3ffa0c432ca75e8a484c354584724f2ab0e12bb2bc3e6e"
+    "sha256": "16c582409e2c998af8c9b3ddc28a658181a80d446157b82a4f1cd1db8ba6a2fb"
   },
   {
     "path": "apps/android/src/test/java/app/underthehood/RulesTest.kt",
@@ -154,5 +154,9 @@
   {
     "path": "apps/android/src/androidTest/java/app/underthehood/LaunchDeviceTest.kt",
     "sha256": "4af2394ecd432b54f0a12b042aa9987bb7f56197df94a7052cde297305bbe008"
+  },
+  {
+    "path": "apps/android/src/androidTest/java/app/underthehood/TransferDeviceTest.kt",
+    "sha256": "1ca704d702e461a3b1dbf8a5ea3dd35e2e2a473e55089468e59ea291f395985c"
   }
 ]
