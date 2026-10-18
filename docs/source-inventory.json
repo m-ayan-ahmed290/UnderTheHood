@@ -49,11 +49,11 @@
   },
   {
     "path": "apps/android/src/main/AndroidManifest.xml",
-    "sha256": "2a3d1791895b21b1a0ce13daf670ef0f4436d9b07167fda023519d844d2061f9"
+    "sha256": "a8b59f4cce87688668f5f959d2621f398398543dd5d4757e5ffc83c75ce7cd0c"
   },
   {
     "path": "apps/android/src/main/res/xml/network_security.xml",
-    "sha256": "80548c0092d037962a7dc151157fa581c81edcccc7fd0077b3be6d9584e98742"
+    "sha256": "9187f485f22fde712aea8de5243664710440a9ee08e9f1b172978eef96a15001"
   },
   {
     "path": "apps/android/src/main/res/xml/file_paths.xml",
@@ -158,5 +158,21 @@
   {
     "path": "apps/android/src/androidTest/java/app/underthehood/TransferDeviceTest.kt",
     "sha256": "1ca704d702e461a3b1dbf8a5ea3dd35e2e2a473e55089468e59ea291f395985c"
+  },
+  {
+    "path": "apps/android/schemas/app.underthehood.HoodDatabase/2.json",
+    "sha256": "e0968734d179311e2709487cceac996e58ff9e9ddf66a08565f4cbbce362282d"
+  },
+  {
+    "path": "apps/android/src/main/res/xml/data_extraction_rules.xml",
+    "sha256": "a0b6d234a64753225ba55d6ca249d0a1456205217ae0c514d61df67602f65615"
+  },
+  {
+    "path": "apps/android/src/main/res/drawable/ic_hood.xml",
+    "sha256": "1d119d102b07bbc7959e5f064899154b1da58aa6226f3bbe55fc2b0dbd892cd7"
+  },
+  {
+    "path": "apps/android/src/main/res/mipmap-anydpi-v26/ic_launcher.xml",
+    "sha256": "b41ac5307ab2056dfab5d9bd8786b7abf1c9ab1bfb8afd302192baf6177f9bd1"
   }
 ]
