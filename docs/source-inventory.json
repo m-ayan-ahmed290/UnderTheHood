@@ -1,0 +1,178 @@
+[
+  {
+    "path": ".gitignore",
+    "sha256": "3d000b377072e5b89d3260db2395fd080fb7bf46f7be234b1abdbd94c8adbb50"
+  },
+  {
+    "path": "settings.gradle.kts",
+    "sha256": "40a01bbbb159ca6c9c7ef4fb61f5da72958178145650bb6eb0fed13686c58c9f"
+  },
+  {
+    "path": "build.gradle.kts",
+    "sha256": "9cdbdc7edaac764a7fba708be33f4b8465aa52d587998d4f51a7e1f9c0516c59"
+  },
+  {
+    "path": "gradle.properties",
+    "sha256": "95ee1fcec61a1d312ba4f46e822766b83571f0bc436873f7b9bcf6ef80896d1c"
+  },
+  {
+    "path": "gradlew",
+    "sha256": "734b3879d3501dce471cf0522d3bcbafe76873d9fc5129345b67fb43bd15e933"
+  },
+  {
+    "path": "gradlew.bat",
+    "sha256": "57931b17dd228e5c24dac90e815d0bf82477e831a4618dfab4136f5446b42a9f"
+  },
+  {
+    "path": "gradle/wrapper/gradle-wrapper.jar",
+    "sha256": "81a82aaea5abcc8ff68b3dfcb58b3c3c429378efd98e7433460610fecd7ae45f"
+  },
+  {
+    "path": "gradle/wrapper/gradle-wrapper.properties",
+    "sha256": "1bb6d43ff8af30abb0eaf03fe58f636ed9b37f758a748bf30a9cebd809639c9d"
+  },
+  {
+    "path": "LICENSE",
+    "sha256": "94348e1308aeb7406bb217bfd8ec02fdb8f8ec193263bd504ec1fbfddd45e1b4"
+  },
+  {
+    "path": "README.md",
+    "sha256": "1025f821a442777ce4b289ea10dd61c031180aa5125c9788534cb0a8a4d1a9be"
+  },
+  {
+    "path": ".github/workflows/android.yml",
+    "sha256": "13237d36dd72e22a0a96d36cfcb4c359ffe1b957131674a83508b3a79b46144f"
+  },
+  {
+    "path": "apps/android/build.gradle.kts",
+    "sha256": "7524030ac98170bc72fc88e7ddb7af872dfbc9be2bdedec36c5123ca44ab44de"
+  },
+  {
+    "path": "apps/android/src/main/AndroidManifest.xml",
+    "sha256": "a8b59f4cce87688668f5f959d2621f398398543dd5d4757e5ffc83c75ce7cd0c"
+  },
+  {
+    "path": "apps/android/src/main/res/xml/network_security.xml",
+    "sha256": "9187f485f22fde712aea8de5243664710440a9ee08e9f1b172978eef96a15001"
+  },
+  {
+    "path": "apps/android/src/main/res/xml/file_paths.xml",
+    "sha256": "a6eabf2edab07064560a9e323c5a2ca1ebe6a5cd159e3f3838d887a571a51660"
+  },
+  {
+    "path": "apps/android/schemas/app.underthehood.HoodDatabase/1.json",
+    "sha256": "db23f5290bf97384db9344877866a2c311ce1e9cb455b8e7a7883b0ee0b63626"
+  },
+  {
+    "path": "native/rclone/go.mod",
+    "sha256": "a2f4eb1bb96127629cd65513e274d2671f46206c1e288651498bd540e578ea43"
+  },
+  {
+    "path": "native/rclone/go.sum",
+    "sha256": "7b5b8915bc6cdf715918486c97589fa0c7e8499e420c5a3a0c6937d4955da556"
+  },
+  {
+    "path": "native/rclone/main.go",
+    "sha256": "63a0f93c34ac71cddd7bb105b50dee1dc712e620d22e88c1cb5448b8d0295c56"
+  },
+  {
+    "path": "native/rclone/main_test.go",
+    "sha256": "ced0ef831a05a4933c7c042315b6b6fa30e24648288ab18bddcbbbca4aa3bb09"
+  },
+  {
+    "path": "native/rclone/bridge_android.c",
+    "sha256": "f4df268d278318cdeb048ef55abb583e2818283c148ae376db61676a6aa0d374"
+  },
+  {
+    "path": "scripts/build-native.sh",
+    "sha256": "5a6c5a93d9f6f5f7979cdb87de351598103280d59a0ecb4ee8cb06d755ab0438"
+  },
+  {
+    "path": "scripts/device-test.sh",
+    "sha256": "2cc18a63a531177186cb97692d70a1c507d5ba15ac6b0869a12ec6af05063622"
+  },
+  {
+    "path": "scripts/notices.py",
+    "sha256": "8e9f411dc271539d68a7ee1a7f873384b8270ae1f6803ee819caa694098cd64b"
+  },
+  {
+    "path": "docs/status.md",
+    "sha256": "62ebcff4c287ad199c8677fa9b79b80f4bada3c0de4f1ac0d4b82785e30d7287"
+  },
+  {
+    "path": "docs/security.md",
+    "sha256": "37d27d1addae1edf583f80db3d52b27064c1241b40cfd87ca147df8c27c66e56"
+  },
+  {
+    "path": "docs/releases.md",
+    "sha256": "324e502b296d9e4ea48be06b3d88e91e10988b82214352468778f83e3545a850"
+  },
+  {
+    "path": "docs/architecture.md",
+    "sha256": "e60b28fb764fdd877a897fabe61f47bdec7a729aa9bd0e58706d340b81b7ade0"
+  },
+  {
+    "path": "docs/supabase-schema.sql",
+    "sha256": "a90224f043408a2186f3419e412e0cf3b7f23cbc2ed5badc52497eceb99a328d"
+  },
+  {
+    "path": "apps/android/src/main/java/app/underthehood/Engine.kt",
+    "sha256": "5af283c8797afbf0c0797c61eebe4a42e1833ae6dced540da05b51e196a6c119"
+  },
+  {
+    "path": "apps/android/src/main/java/app/underthehood/Data.kt",
+    "sha256": "df49c4b8b4b1342fd0956f4b04238dbe965de37da44eac7df2b426f68c61b164"
+  },
+  {
+    "path": "apps/android/src/main/java/app/underthehood/Vault.kt",
+    "sha256": "e4322038651b11ba7a72fe8ae2047ffe57d199ead5c417543b1d54f3bb88191d"
+  },
+  {
+    "path": "apps/android/src/main/java/app/underthehood/Transfers.kt",
+    "sha256": "4294af94a09ff9ba2bf1e8e97c7b8f0179be3018ee45a3a76bab15d61f05e01d"
+  },
+  {
+    "path": "apps/android/src/main/java/app/underthehood/Sync.kt",
+    "sha256": "7c9fabf1f86346f779794c75ce2750daf64b9ccfd3bb6337dfcbcbd5e3cbe199"
+  },
+  {
+    "path": "apps/android/src/main/java/app/underthehood/Model.kt",
+    "sha256": "92e40305883f966c2125720afe6ff93c3f387b1e89b8648d8852230171c05226"
+  },
+  {
+    "path": "apps/android/src/main/java/app/underthehood/MainActivity.kt",
+    "sha256": "1bcf0c886dbc9eb119852cc73b33f5499777d29bbde8bd90bc45c1174b6f93b2"
+  },
+  {
+    "path": "apps/android/src/test/java/app/underthehood/RulesTest.kt",
+    "sha256": "79302c6e1317afb2831c70c2fe212f9505654d3c2918a89dc033c4c0f47a26d2"
+  },
+  {
+    "path": "apps/android/src/androidTest/java/app/underthehood/EngineDeviceTest.kt",
+    "sha256": "f4a5da7feb899994acfaf673c81fcce0526785aea6fd04dd9777c8211dc8a40d"
+  },
+  {
+    "path": "apps/android/src/androidTest/java/app/underthehood/LaunchDeviceTest.kt",
+    "sha256": "a96e8a0e1d7bdbe6570af83793ed9914b7ee7a50a1b525d892898aad1b2e7fbd"
+  },
+  {
+    "path": "apps/android/src/androidTest/java/app/underthehood/TransferDeviceTest.kt",
+    "sha256": "d7b5dba87c783ad19b54fff6d7b310c9711f3f95ee5b90df00ca6856b6912c6e"
+  },
+  {
+    "path": "apps/android/schemas/app.underthehood.HoodDatabase/2.json",
+    "sha256": "e0968734d179311e2709487cceac996e58ff9e9ddf66a08565f4cbbce362282d"
+  },
+  {
+    "path": "apps/android/src/main/res/xml/data_extraction_rules.xml",
+    "sha256": "a0b6d234a64753225ba55d6ca249d0a1456205217ae0c514d61df67602f65615"
+  },
+  {
+    "path": "apps/android/src/main/res/drawable/ic_hood.xml",
+    "sha256": "1d119d102b07bbc7959e5f064899154b1da58aa6226f3bbe55fc2b0dbd892cd7"
+  },
+  {
+    "path": "apps/android/src/main/res/mipmap-anydpi-v26/ic_launcher.xml",
+    "sha256": "b41ac5307ab2056dfab5d9bd8786b7abf1c9ab1bfb8afd302192baf6177f9bd1"
+  }
+]
