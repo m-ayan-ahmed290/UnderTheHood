@@ -31,10 +31,16 @@ class LaunchDeviceTest {
         compose.onNodeWithText("Save").performClick()
         try {
             compose.waitUntil(10000) {
-                compose
-                    .onAllNodesWithText("Device integration folder")
-                    .fetchSemanticsNodes()
-                    .isNotEmpty()
+                runCatching {
+                        compose
+                            .onNode(hasScrollToIndexAction())
+                            .performScrollToNode(hasText("Device integration folder"))
+                        compose
+                            .onAllNodesWithText("Device integration folder")
+                            .fetchSemanticsNodes()
+                            .isNotEmpty()
+                    }
+                    .getOrDefault(false)
             }
         } catch (e: Throwable) {
             val c =
@@ -43,6 +49,7 @@ class LaunchDeviceTest {
             val names = kotlinx.coroutines.runBlocking { c.hood.db.store().nodes().map { it.name } }
             throw AssertionError("Stored nodes: $names\nUI: ${compose.onRoot().printToString()}", e)
         }
-        compose.onNodeWithText("Device integration folder").assertIsDisplayed()
+        compose.onNodeWithText("Device integration folder").assertIsDisplayed().performClick()
+        compose.onNodeWithText("Room for everything").assertIsDisplayed()
     }
 }

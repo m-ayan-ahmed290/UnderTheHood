@@ -93,7 +93,7 @@
   },
   {
     "path": "scripts/notices.py",
-    "sha256": "570d36395c1227b2177bd64c5c611ce3e9e9c1a4a1baeb49523569dee9d66aa9"
+    "sha256": "8e9f411dc271539d68a7ee1a7f873384b8270ae1f6803ee819caa694098cd64b"
   },
   {
     "path": "docs/status.md",
@@ -153,7 +153,7 @@
   },
   {
     "path": "apps/android/src/androidTest/java/app/underthehood/LaunchDeviceTest.kt",
-    "sha256": "0c6d111c8c747cf7e5c74168affdf023723f8c75df6301b813bd579677b10068"
+    "sha256": "a96e8a0e1d7bdbe6570af83793ed9914b7ee7a50a1b525d892898aad1b2e7fbd"
   },
   {
     "path": "apps/android/src/androidTest/java/app/underthehood/TransferDeviceTest.kt",

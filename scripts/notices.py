@@ -3,6 +3,9 @@
 import pathlib, subprocess
 root = pathlib.Path(__file__).resolve().parent.parent
 print('UnderTheHood: MIT. Native engine: Rclone (MIT) and its dependencies.\n')
+print((root / 'LICENSE').read_text())
+goroot = pathlib.Path(subprocess.check_output(['go', 'env', 'GOROOT'], text=True).strip())
+print('\nGo runtime and standard library\n' + (goroot / 'LICENSE').read_text())
 paths = subprocess.check_output(['go', 'list', '-mod=readonly', '-deps', '-f', '{{if .Module}}{{.Module.Dir}}{{end}}', '.'], cwd=root/'native/rclone', text=True)
 for folder in sorted(set(paths.splitlines())):
     if not folder:
